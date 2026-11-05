@@ -137,7 +137,7 @@ class DriveTest {
 
     @Test
     fun `a silent battery ECU falls back to 7D2 and is asked less and less often`() {
-        val sent = java.util.Collections.synchronizedList(mutableListOf<String>())
+        val sent = java.util.concurrent.CopyOnWriteArrayList<String>()
         val recorder = object : SessionRecorder {
             override fun exchange(exchange: Exchange) {
                 sent += exchange.command
