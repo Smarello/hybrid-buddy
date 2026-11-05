@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -51,6 +52,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,11 +83,11 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val Green = Color(0xFF5BD27A)
-private val Amber = Color(0xFFF2B84B)
-private val Red = Color(0xFFEF6461)
-private val Grey = Color(0xFF8A9099)
-private val CardBackground = Color(0xFF1B1E23)
+internal val Green = Color(0xFF5BD27A)
+internal val Amber = Color(0xFFF2B84B)
+internal val Red = Color(0xFFEF6461)
+internal val Grey = Color(0xFF8A9099)
+internal val CardBackground = Color(0xFF1B1E23)
 private const val SAMPLE_ASSET = "sample-simulated.jsonl"
 private const val VISIBLE_EXCHANGES = 8
 private val exchangeTime = DateTimeFormatter.ofPattern("HH:mm:ss.SSS").withZone(ZoneId.systemDefault())
@@ -95,14 +97,22 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                Surface(Modifier.fillMaxSize()) { DiagnosticsScreen() }
+                Surface(Modifier.fillMaxSize()) {
+                    var exploring by rememberSaveable { mutableStateOf(AcquisitionController.isExplorationRunning) }
+                    if (exploring) {
+                        BackHandler { exploring = false }
+                        BrakeExplorationScreen(onBack = { exploring = false })
+                    } else {
+                        DiagnosticsScreen(onExploreBrakes = { exploring = true })
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun DiagnosticsScreen() {
+private fun DiagnosticsScreen(onExploreBrakes: () -> Unit) {
     val context = LocalContext.current
     val preferences = remember { context.getSharedPreferences("adapter", Context.MODE_PRIVATE) }
     var adapterAddress by remember { mutableStateOf(preferences.getString("address", null)) }
@@ -177,10 +187,11 @@ private fun DiagnosticsScreen() {
             } else {
                 Button(onClick = { startAfterChoice = true; withBluetoothPermission(::startLive) }) { Text("▶ Avvia acquisizione") }
             }
-            OutlinedButton(onClick = { exportLatest(context) }) { Text("Esporta sessione") }
+            OutlinedButton(onClick = { exportLatest(context, AcquisitionController.SESSION_PREFIX) }) { Text("Esporta sessione") }
             OutlinedButton(onClick = { startAfterChoice = false; withBluetoothPermission { choosingDevice = true } }) {
                 Text("Dispositivo")
             }
+            OutlinedButton(onClick = onExploreBrakes) { Text("Esplora freni") }
             ReplayMenu(
                 onSample = { startReplay(context, "$SAMPLE_ASSET (SIMULATA)") { context.assets.open(SAMPLE_ASSET) } },
                 onFile = { openRecording.launch(arrayOf("*/*")) },
@@ -271,7 +282,7 @@ private fun DetailLine(state: SessionState?) {
 }
 
 @Composable
-private fun SectionLabel(text: String) {
+internal fun SectionLabel(text: String) {
     Text(text.uppercase(), color = Grey, fontSize = 11.sp, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
 }
 
@@ -294,7 +305,7 @@ private fun ParameterRow(label: String, shown: SignalPresentation) {
 }
 
 @Composable
-private fun ExchangeLog(exchanges: List<Exchange>) {
+internal fun ExchangeLog(exchanges: List<Exchange>) {
     Column(Modifier.fillMaxWidth().background(Color(0xFF0C0D0F), RoundedCornerShape(8.dp)).padding(8.dp)) {
         if (exchanges.isEmpty()) Text("Nessuno scambio", color = Grey, fontSize = 11.sp)
         exchanges.forEach { exchange ->
@@ -363,11 +374,11 @@ private fun displayName(context: Context, uri: Uri): String =
         if (cursor.moveToFirst()) cursor.getString(0) else null
     } ?: "registrazione"
 
-/** Shares the latest live recording through Android's share sheet, only on explicit user action. */
-private fun exportLatest(context: Context) {
-    val file = AcquisitionController.latestRecording(context)
+/** Shares the latest live recording of a kind through Android's share sheet, only on explicit user action. */
+internal fun exportLatest(context: Context, prefix: String) {
+    val file = AcquisitionController.latestRecording(context, prefix)
     if (file == null) {
-        Toast.makeText(context, "Nessuna sessione registrata da esportare", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "Nessuna registrazione da esportare", Toast.LENGTH_LONG).show()
         return
     }
     val uri = FileProvider.getUriForFile(context, "${context.packageName}.recordings", file)

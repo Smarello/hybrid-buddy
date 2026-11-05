@@ -7,6 +7,7 @@ import it.techreloaded.hybridbuddy.obdlink.ElmConnection
 import it.techreloaded.hybridbuddy.obdlink.EndOfRecording
 import it.techreloaded.hybridbuddy.obdlink.Exchange
 import it.techreloaded.hybridbuddy.obdlink.InMemoryAdapterLink
+import it.techreloaded.hybridbuddy.obdlink.IsoTp
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -53,6 +54,18 @@ data class RecordedEvent(val t: Long, val event: String, val detail: String? = n
         const val CONNECTED = "connected"
         const val CONNECT_FAILED = "connect_failed"
         const val DISCONNECTED = "disconnected"
+
+        /** Start of a pedal phase during the brake exploration; detail = phase name. */
+        const val PEDAL_PHASE = "pedal_phase"
+
+        /** Brake exploration step reached or ECU found silent; detail = description. */
+        const val EXPLORATION = "exploration"
+
+        /** The brake exploration mapping ran to the end: the recording can be reused as mapping. */
+        const val MAPPING_COMPLETED = "mapping_completed"
+
+        /** The brake exploration skipped the mapping and reused another recording's; detail = its file name. */
+        const val MAPPING_REUSED = "mapping_reused"
     }
 }
 
@@ -61,12 +74,32 @@ object Recording {
 
     fun encode(line: RecordingLine): String = json.encodeToString(RecordingLine.serializer(), line)
 
+    /** One line, or null when it is not valid (e.g. the last line cut by an abrupt stop). */
+    fun decodeOrNull(line: String): RecordingLine? =
+        runCatching { json.decodeFromString(RecordingLine.serializer(), line) }.getOrNull()
+
     /** @throws IllegalArgumentException when the first line is not a session header. */
     fun parse(lines: Sequence<String>): Pair<RecordingHeader, List<RecordingLine>> {
         val parsed = lines.filter { it.isNotBlank() }.map { json.decodeFromString(RecordingLine.serializer(), it) }.toList()
         val header = parsed.firstOrNull() as? RecordingHeader
             ?: throw IllegalArgumentException("la registrazione non inizia con l'intestazione di sessione")
         return header to parsed.drop(1)
+    }
+}
+
+object Privacy {
+    const val MASKED = "[mascherato: possibile VIN]"
+    private val vinCharacters = (('0'..'9') + ('A'..'Z') - setOf('I', 'O', 'Q')).map { it.code }.toSet()
+
+    /**
+     * Toyota read services can return identification data: any answer holding 17 consecutive
+     * ASCII characters shaped like a VIN is replaced by [MASKED] before it is written.
+     */
+    fun maskVinLike(raw: String?, lines: List<String>): String? {
+        val vinLike = IsoTp.messages(lines).any { message ->
+            message.payload.fold(0) { run, byte -> if (run >= 17) run else if (byte in vinCharacters) run + 1 else 0 } >= 17
+        }
+        return if (vinLike) MASKED else raw
     }
 }
 
@@ -82,7 +115,10 @@ class JsonlSessionRecorder(private val writer: Writer, header: RecordingHeader) 
     }
 
     override fun exchange(exchange: Exchange) = write(
-        RecordedExchange(exchange.startedAtEpochMs, exchange.command, exchange.durationMs, exchange.raw, exchange.error),
+        RecordedExchange(
+            exchange.startedAtEpochMs, exchange.command, exchange.durationMs,
+            Privacy.maskVinLike(exchange.raw, exchange.lines), exchange.error,
+        ),
     )
 
     override fun event(atEpochMs: Long, event: String, detail: String?) = write(RecordedEvent(atEpochMs, event, detail))
