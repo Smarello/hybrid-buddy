@@ -1,8 +1,15 @@
 package it.techreloaded.hybridbuddy
 
+import it.techreloaded.hybridbuddy.exploration.Answer
+import it.techreloaded.hybridbuddy.exploration.BrakeExplorationPlan
+import it.techreloaded.hybridbuddy.exploration.MappingRecording
+import it.techreloaded.hybridbuddy.exploration.PedalAnalysis
+import it.techreloaded.hybridbuddy.exploration.PedalPhase
+import it.techreloaded.hybridbuddy.exploration.ProbedIdentifier
 import it.techreloaded.hybridbuddy.obdlink.AdapterResponse
 import it.techreloaded.hybridbuddy.obdlink.IsoTp
 import it.techreloaded.hybridbuddy.session.AcquisitionSession
+import it.techreloaded.hybridbuddy.session.RecordedEvent
 import it.techreloaded.hybridbuddy.session.RecordedExchange
 import it.techreloaded.hybridbuddy.session.PhoneLinkState
 import it.techreloaded.hybridbuddy.session.Recording
@@ -17,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** Recordings exported from the real phone, kept as permanent test cases. */
@@ -57,5 +65,37 @@ class RealRecordingsTest {
         assertTrue(rpm.value!! in 1200.0..1500.0)
         assertEquals("AUTO, ISO 15765-4 (CAN 11/500)", replay.state.value.protocol)
         assertEquals("ELM327 v1.4b · STN1155 v5.6.19", replay.state.value.adapterIdentity)
+    }
+
+    @Test
+    fun `A34 2026-11-05 - pedal phases on the brake ECU 7B0, reused mapping`() {
+        val text = javaClass.getResource("/recordings/2026-11-05-a34-esplorazione-pedale-0.2.1.jsonl")!!.readText()
+        val (header, lines) = Recording.parse(text.lineSequence())
+        assertEquals("0.2.1", header.appVersion)
+        // A pedal-only recording is never offered as a mapping to reuse.
+        assertNull(MappingRecording.read("pedale.jsonl", text.lineSequence()))
+
+        val brakes = BrakeExplorationPlan.targets.single { it.requestHeader == "7B0" }
+        val answers = mutableMapOf<ProbedIdentifier, MutableMap<PedalPhase, MutableList<List<Int>>>>()
+        var phase: PedalPhase? = null
+        for (line in lines) {
+            if (line is RecordedEvent && line.event == RecordedEvent.PEDAL_PHASE) phase = PedalPhase.valueOf(line.detail!!)
+            val current = phase ?: continue
+            if (line !is RecordedExchange || !line.cmd.startsWith("22")) continue
+            val answer = Answer.of(AdapterResponse.lines(line.raw, line.cmd), line.error, brakes, line.cmd)
+            if (answer is Answer.Positive) {
+                answers.getOrPut(ProbedIdentifier(brakes, line.cmd)) { mutableMapOf() }.getOrPut(current) { mutableListOf() } += answer.payload
+            }
+        }
+        assertEquals(66, answers.size)
+        val changed = PedalAnalysis.changedWithPedal(answers).map { it.request }.toSet()
+        // Same 12 as shown by the app; 221022, 22104C, 221070, 22102D are the strongest candidates (SIGNALS.md).
+        assertEquals(
+            setOf(
+                "221004", "221007", "221011", "221022", "22102D", "221034",
+                "22104C", "221070", "221081", "221082", "221083", "2210A2",
+            ),
+            changed,
+        )
     }
 }

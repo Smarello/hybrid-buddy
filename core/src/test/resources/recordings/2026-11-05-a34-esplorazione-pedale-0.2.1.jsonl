@@ -1,0 +1,414 @@
+{"type":"session","startedAtEpochMs":1793901694323,"source":"live","appVersion":"0.2.1","note":"esplorazione freni"}
+{"type":"event","t":1793901694579,"event":"connected"}
+{"type":"exchange","t":1793901694581,"cmd":"ATZ","durationMs":880,"raw":"\r\rELM327 v1.4b\r\r"}
+{"type":"exchange","t":1793901695463,"cmd":"ATE0","durationMs":13,"raw":"ATE0\rOK\r\r"}
+{"type":"exchange","t":1793901695479,"cmd":"ATL0","durationMs":13,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901695494,"cmd":"ATH1","durationMs":156,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901695653,"cmd":"ATSP0","durationMs":13,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901695668,"cmd":"ATI","durationMs":328,"raw":"ELM327 v1.4b\r\r"}
+{"type":"exchange","t":1793901695998,"cmd":"STI","durationMs":174,"raw":"STN1155 v5.6.19\r\r"}
+{"type":"exchange","t":1793901696175,"cmd":"0100","durationMs":4839,"raw":"SEARCHING...\r7EE 06 41 00 98 1A 80 03 \r7EB 06 41 00 98 18 80 03 \r7EA 06 41 00 98 1A 80 03 \r7E8 06 41 00 BE 1F A0 13 \r\r"}
+{"type":"exchange","t":1793901701018,"cmd":"ATDP","durationMs":12,"raw":"AUTO, ISO 15765-4 (CAN 11/500)\r\r"}
+{"type":"event","t":1793901701032,"event":"mapping_reused","detail":"esplorazione-freni-20261105-183514.jsonl"}
+{"type":"event","t":1793901707359,"event":"pedal_phase","detail":"RELEASED"}
+{"type":"exchange","t":1793901707360,"cmd":"ATSH 7B0","durationMs":122,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901707484,"cmd":"ATCRA 7B8","durationMs":9,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901707494,"cmd":"ATFCSH 7B0","durationMs":7,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901707503,"cmd":"ATFCSD 30 00 00","durationMs":8,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901707513,"cmd":"ATFCSM 1","durationMs":7,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901707522,"cmd":"221000","durationMs":150,"raw":"7B8 10 23 62 10 00 7B ED C4 \r7B8 21 6B FC 8B DD D0 0C 10 \r7B8 22 18 10 04 01 00 00 F0 \r7B8 23 00 00 00 FF C4 1C 00 \r7B8 24 00 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901707675,"cmd":"221002","durationMs":164,"raw":"7B8 10 0B 62 10 02 00 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901707841,"cmd":"221003","durationMs":188,"raw":"7B8 07 62 10 03 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901708032,"cmd":"221004","durationMs":264,"raw":"7B8 04 62 10 04 0A \r\r"}
+{"type":"exchange","t":1793901708299,"cmd":"221005","durationMs":205,"raw":"7B8 04 62 10 05 00 \r\r"}
+{"type":"exchange","t":1793901708507,"cmd":"221007","durationMs":183,"raw":"7B8 04 62 10 07 1E \r\r"}
+{"type":"exchange","t":1793901708693,"cmd":"221008","durationMs":189,"raw":"7B8 05 62 10 08 00 00 \r\r"}
+{"type":"exchange","t":1793901708885,"cmd":"221009","durationMs":203,"raw":"7B8 05 62 10 09 00 00 \r\r"}
+{"type":"exchange","t":1793901709092,"cmd":"22100A","durationMs":310,"raw":"7B8 04 62 10 0A 80 \r\r"}
+{"type":"exchange","t":1793901709404,"cmd":"22100B","durationMs":200,"raw":"7B8 04 62 10 0B 80 \r\r"}
+{"type":"exchange","t":1793901709607,"cmd":"22100D","durationMs":190,"raw":"7B8 05 62 10 0D 83 66 \r\r"}
+{"type":"exchange","t":1793901709800,"cmd":"22100E","durationMs":184,"raw":"7B8 05 62 10 0E 7F E2 \r\r"}
+{"type":"exchange","t":1793901709987,"cmd":"221010","durationMs":191,"raw":"7B8 04 62 10 10 00 \r\r"}
+{"type":"exchange","t":1793901710181,"cmd":"221011","durationMs":201,"raw":"7B8 04 62 10 11 29 \r\r"}
+{"type":"exchange","t":1793901710385,"cmd":"221012","durationMs":186,"raw":"7B8 05 62 10 12 00 00 \r\r"}
+{"type":"exchange","t":1793901710574,"cmd":"221016","durationMs":53,"raw":"7B8 04 62 10 16 00 \r\r"}
+{"type":"exchange","t":1793901710632,"cmd":"22101A","durationMs":120,"raw":"7B8 04 62 10 1A 0D \r\r"}
+{"type":"exchange","t":1793901710755,"cmd":"22101B","durationMs":51,"raw":"7B8 04 62 10 1B 00 \r\r"}
+{"type":"exchange","t":1793901710810,"cmd":"22101D","durationMs":219,"raw":"7B8 04 62 10 1D 01 \r\r"}
+{"type":"exchange","t":1793901711032,"cmd":"22101F","durationMs":137,"raw":"7B8 05 62 10 1F 80 80 \r\r"}
+{"type":"exchange","t":1793901711172,"cmd":"221020","durationMs":76,"raw":"7B8 04 62 10 20 00 \r\r"}
+{"type":"exchange","t":1793901711252,"cmd":"221021","durationMs":92,"raw":"7B8 04 62 10 21 00 \r\r"}
+{"type":"exchange","t":1793901711347,"cmd":"221022","durationMs":90,"raw":"7B8 07 62 10 22 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901711440,"cmd":"221023","durationMs":129,"raw":"7B8 05 62 10 23 00 00 \r\r"}
+{"type":"exchange","t":1793901711572,"cmd":"221024","durationMs":151,"raw":"7B8 04 62 10 24 00 \r\r"}
+{"type":"exchange","t":1793901711726,"cmd":"221025","durationMs":85,"raw":"7B8 04 62 10 25 0D \r\r"}
+{"type":"exchange","t":1793901711814,"cmd":"221026","durationMs":75,"raw":"7B8 04 62 10 26 0A \r\r"}
+{"type":"exchange","t":1793901711893,"cmd":"221029","durationMs":79,"raw":"7B8 04 62 10 29 30 \r\r"}
+{"type":"exchange","t":1793901711975,"cmd":"22102D","durationMs":162,"raw":"7B8 10 13 62 10 2D 30 10 FF \r7B8 21 00 FF 00 7D 00 EF 24 \r7B8 22 C0 00 10 10 60 40 00 \r\r"}
+{"type":"exchange","t":1793901712140,"cmd":"22102F","durationMs":150,"raw":"7B8 10 0B 62 10 2F 07 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901712294,"cmd":"221030","durationMs":89,"raw":"7B8 07 62 10 30 FF 00 0A 00 \r\r"}
+{"type":"exchange","t":1793901712387,"cmd":"221031","durationMs":77,"raw":"7B8 05 62 10 31 60 60 \r\r"}
+{"type":"exchange","t":1793901712467,"cmd":"221032","durationMs":73,"raw":"7B8 04 62 10 32 88 \r\r"}
+{"type":"exchange","t":1793901712543,"cmd":"221034","durationMs":112,"raw":"7B8 05 62 10 34 88 88 \r\r"}
+{"type":"exchange","t":1793901712657,"cmd":"221035","durationMs":82,"raw":"7B8 05 62 10 35 26 27 \r\r"}
+{"type":"exchange","t":1793901712743,"cmd":"221036","durationMs":81,"raw":"7B8 05 62 10 36 26 26 \r\r"}
+{"type":"exchange","t":1793901712827,"cmd":"221038","durationMs":48,"raw":"7B8 04 62 10 38 3A \r\r"}
+{"type":"exchange","t":1793901712878,"cmd":"221039","durationMs":85,"raw":"7B8 04 62 10 39 00 \r\r"}
+{"type":"exchange","t":1793901712966,"cmd":"22103A","durationMs":49,"raw":"7B8 04 62 10 3A 01 \r\r"}
+{"type":"exchange","t":1793901713019,"cmd":"22103C","durationMs":73,"raw":"7B8 05 62 10 3C 17 17 \r\r"}
+{"type":"exchange","t":1793901713094,"cmd":"221045","durationMs":53,"raw":"7B8 05 62 10 45 00 00 \r\r"}
+{"type":"exchange","t":1793901713152,"cmd":"221046","durationMs":83,"raw":"7B8 10 0F 62 10 46 9F 16 FF \r7B8 21 00 0C 00 FF 00 78 28 \r7B8 22 40 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901713239,"cmd":"22104C","durationMs":286,"raw":"7B8 04 62 10 4C 00 \r\r"}
+{"type":"exchange","t":1793901713528,"cmd":"221054","durationMs":109,"raw":"7B8 05 62 10 54 00 00 \r\r"}
+{"type":"exchange","t":1793901713640,"cmd":"221055","durationMs":118,"raw":"7B8 05 62 10 55 00 00 \r\r"}
+{"type":"exchange","t":1793901713761,"cmd":"22105C","durationMs":153,"raw":"7B8 04 62 10 5C E8 \r\r"}
+{"type":"exchange","t":1793901713917,"cmd":"221066","durationMs":156,"raw":"7B8 06 62 10 66 81 88 88 \r\r"}
+{"type":"exchange","t":1793901714076,"cmd":"221070","durationMs":101,"raw":"7B8 05 62 10 70 41 3F \r\r"}
+{"type":"exchange","t":1793901714180,"cmd":"221081","durationMs":121,"raw":"7B8 05 62 10 81 FF F3 \r\r"}
+{"type":"exchange","t":1793901714304,"cmd":"221082","durationMs":118,"raw":"7B8 05 62 10 82 FF F5 \r\r"}
+{"type":"exchange","t":1793901714425,"cmd":"221083","durationMs":167,"raw":"7B8 05 62 10 83 00 03 \r\r"}
+{"type":"exchange","t":1793901714595,"cmd":"221084","durationMs":187,"raw":"7B8 05 62 10 84 FF F0 \r\r"}
+{"type":"exchange","t":1793901714786,"cmd":"2210A1","durationMs":163,"raw":"7B8 05 62 10 A1 7F FF \r\r"}
+{"type":"exchange","t":1793901714952,"cmd":"2210A2","durationMs":121,"raw":"7B8 05 62 10 A2 FF 97 \r\r"}
+{"type":"exchange","t":1793901715076,"cmd":"2210A3","durationMs":50,"raw":"7B8 04 62 10 A3 00 \r\r"}
+{"type":"exchange","t":1793901715129,"cmd":"2210A4","durationMs":311,"raw":"7B8 04 62 10 A4 00 \r\r"}
+{"type":"exchange","t":1793901715444,"cmd":"2210A5","durationMs":224,"raw":"7B8 05 62 10 A5 01 DB \r\r"}
+{"type":"exchange","t":1793901715671,"cmd":"2210A6","durationMs":199,"raw":"7B8 05 62 10 A6 FF FD \r\r"}
+{"type":"exchange","t":1793901715874,"cmd":"2210A7","durationMs":242,"raw":"7B8 04 62 10 A7 00 \r\r"}
+{"type":"exchange","t":1793901716119,"cmd":"2210A8","durationMs":172,"raw":"7B8 04 62 10 A8 00 \r\r"}
+{"type":"exchange","t":1793901716294,"cmd":"2210A9","durationMs":43,"raw":"7B8 05 62 10 A9 7F FF \r\r"}
+{"type":"exchange","t":1793901716340,"cmd":"2210AA","durationMs":320,"raw":"7B8 05 62 10 AA 00 00 \r\r"}
+{"type":"exchange","t":1793901716664,"cmd":"2210AE","durationMs":284,"raw":"7B8 10 31 62 10 AE 35 33 33 \r7B8 21 31 34 5F 32 30 32 35 \r7B8 22 2D 30 35 2D 31 39 5F \r7B8 23 31 31 3A 34 32 3A 34 \r7B8 24 34 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r7B8 26 00 00 00 00 00 00 00 \r7B8 27 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901716953,"cmd":"2210B4","durationMs":44,"raw":"7B8 05 62 10 B4 C6 00 \r\r"}
+{"type":"exchange","t":1793901717000,"cmd":"2210B5","durationMs":644,"raw":"7B8 03 7F 22 78 \r7B8 05 62 10 B5 80 00 \r\r"}
+{"type":"exchange","t":1793901717648,"cmd":"2210B6","durationMs":106,"raw":"7B8 05 62 10 B6 E0 00 \r\r"}
+{"type":"exchange","t":1793901717757,"cmd":"ATSH 7B0","durationMs":11,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901717770,"cmd":"ATCRA 7B8","durationMs":11,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901717783,"cmd":"ATFCSH 7B0","durationMs":44,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901717831,"cmd":"ATFCSD 30 00 00","durationMs":124,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901717957,"cmd":"ATFCSM 1","durationMs":180,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901718140,"cmd":"221000","durationMs":242,"raw":"7B8 10 23 62 10 00 7B ED C4 \r7B8 21 6B FC 8B DD D0 0C 10 \r7B8 22 18 10 04 01 00 00 F0 \r7B8 23 00 00 00 FF C4 1C 00 \r7B8 24 00 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901718387,"cmd":"221002","durationMs":184,"raw":"7B8 10 0B 62 10 02 00 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901718574,"cmd":"221003","durationMs":161,"raw":"7B8 07 62 10 03 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901718739,"cmd":"221004","durationMs":215,"raw":"7B8 04 62 10 04 0A \r\r"}
+{"type":"exchange","t":1793901718957,"cmd":"221005","durationMs":180,"raw":"7B8 04 62 10 05 00 \r\r"}
+{"type":"exchange","t":1793901719140,"cmd":"221007","durationMs":200,"raw":"7B8 04 62 10 07 1E \r\r"}
+{"type":"exchange","t":1793901719343,"cmd":"221008","durationMs":188,"raw":"7B8 05 62 10 08 FF 00 \r\r"}
+{"type":"exchange","t":1793901719534,"cmd":"221009","durationMs":194,"raw":"7B8 05 62 10 09 00 00 \r\r"}
+{"type":"exchange","t":1793901719731,"cmd":"22100A","durationMs":183,"raw":"7B8 04 62 10 0A 80 \r\r"}
+{"type":"exchange","t":1793901719917,"cmd":"22100B","durationMs":266,"raw":"7B8 04 62 10 0B 80 \r\r"}
+{"type":"exchange","t":1793901720186,"cmd":"22100D","durationMs":171,"raw":"7B8 05 62 10 0D 83 66 \r\r"}
+{"type":"exchange","t":1793901720361,"cmd":"22100E","durationMs":43,"raw":"7B8 05 62 10 0E 7F E2 \r\r"}
+{"type":"exchange","t":1793901720406,"cmd":"221010","durationMs":126,"raw":"7B8 04 62 10 10 00 \r\r"}
+{"type":"exchange","t":1793901720534,"cmd":"221011","durationMs":112,"raw":"7B8 04 62 10 11 29 \r\r"}
+{"type":"exchange","t":1793901720649,"cmd":"221012","durationMs":53,"raw":"7B8 05 62 10 12 00 00 \r\r"}
+{"type":"exchange","t":1793901720705,"cmd":"221016","durationMs":182,"raw":"7B8 04 62 10 16 00 \r\r"}
+{"type":"exchange","t":1793901720890,"cmd":"22101A","durationMs":209,"raw":"7B8 04 62 10 1A 0D \r\r"}
+{"type":"exchange","t":1793901721103,"cmd":"22101B","durationMs":246,"raw":"7B8 04 62 10 1B 00 \r\r"}
+{"type":"exchange","t":1793901721351,"cmd":"22101D","durationMs":195,"raw":"7B8 04 62 10 1D 01 \r\r"}
+{"type":"exchange","t":1793901721549,"cmd":"22101F","durationMs":55,"raw":"7B8 05 62 10 1F 80 80 \r\r"}
+{"type":"exchange","t":1793901721608,"cmd":"221020","durationMs":83,"raw":"7B8 04 62 10 20 00 \r\r"}
+{"type":"exchange","t":1793901721694,"cmd":"221021","durationMs":151,"raw":"7B8 04 62 10 21 00 \r\r"}
+{"type":"exchange","t":1793901721848,"cmd":"221022","durationMs":153,"raw":"7B8 07 62 10 22 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901722004,"cmd":"221023","durationMs":77,"raw":"7B8 05 62 10 23 00 00 \r\r"}
+{"type":"exchange","t":1793901722084,"cmd":"221024","durationMs":58,"raw":"7B8 04 62 10 24 00 \r\r"}
+{"type":"exchange","t":1793901722145,"cmd":"221025","durationMs":56,"raw":"7B8 04 62 10 25 0F \r\r"}
+{"type":"exchange","t":1793901722204,"cmd":"221026","durationMs":51,"raw":"7B8 04 62 10 26 0A \r\r"}
+{"type":"exchange","t":1793901722258,"cmd":"221029","durationMs":127,"raw":"7B8 04 62 10 29 30 \r\r"}
+{"type":"event","t":1793901722388,"event":"pedal_phase","detail":"LIGHT"}
+{"type":"exchange","t":1793901722389,"cmd":"ATSH 7B0","durationMs":12,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901722404,"cmd":"ATCRA 7B8","durationMs":12,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901722418,"cmd":"ATFCSH 7B0","durationMs":13,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901722434,"cmd":"ATFCSD 30 00 00","durationMs":126,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901722563,"cmd":"ATFCSM 1","durationMs":12,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901722579,"cmd":"221000","durationMs":106,"raw":"7B8 10 23 62 10 00 7B ED C4 \r7B8 21 6B FC 8B DD D0 0C 10 \r7B8 22 18 10 04 01 00 00 F0 \r7B8 23 00 00 00 FF C4 1C 00 \r7B8 24 00 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901722689,"cmd":"221002","durationMs":93,"raw":"7B8 10 0B 62 10 02 00 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901722786,"cmd":"221003","durationMs":135,"raw":"7B8 07 62 10 03 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901722924,"cmd":"221004","durationMs":152,"raw":"7B8 04 62 10 04 0A \r\r"}
+{"type":"exchange","t":1793901723079,"cmd":"221005","durationMs":106,"raw":"7B8 04 62 10 05 00 \r\r"}
+{"type":"exchange","t":1793901723188,"cmd":"221007","durationMs":160,"raw":"7B8 04 62 10 07 1E \r\r"}
+{"type":"exchange","t":1793901723351,"cmd":"221008","durationMs":54,"raw":"7B8 05 62 10 08 FF 00 \r\r"}
+{"type":"exchange","t":1793901723409,"cmd":"221009","durationMs":112,"raw":"7B8 05 62 10 09 00 00 \r\r"}
+{"type":"exchange","t":1793901723526,"cmd":"22100A","durationMs":118,"raw":"7B8 04 62 10 0A 80 \r\r"}
+{"type":"exchange","t":1793901723647,"cmd":"22100B","durationMs":122,"raw":"7B8 04 62 10 0B 80 \r\r"}
+{"type":"exchange","t":1793901723772,"cmd":"22100D","durationMs":54,"raw":"7B8 05 62 10 0D 83 66 \r\r"}
+{"type":"exchange","t":1793901723829,"cmd":"22100E","durationMs":47,"raw":"7B8 05 62 10 0E 7F E2 \r\r"}
+{"type":"exchange","t":1793901723880,"cmd":"221010","durationMs":116,"raw":"7B8 04 62 10 10 00 \r\r"}
+{"type":"exchange","t":1793901723999,"cmd":"221011","durationMs":46,"raw":"7B8 04 62 10 11 29 \r\r"}
+{"type":"exchange","t":1793901724050,"cmd":"221012","durationMs":76,"raw":"7B8 05 62 10 12 00 00 \r\r"}
+{"type":"exchange","t":1793901724129,"cmd":"221016","durationMs":71,"raw":"7B8 04 62 10 16 00 \r\r"}
+{"type":"exchange","t":1793901724203,"cmd":"22101A","durationMs":100,"raw":"7B8 04 62 10 1A 0D \r\r"}
+{"type":"exchange","t":1793901724306,"cmd":"22101B","durationMs":72,"raw":"7B8 04 62 10 1B 00 \r\r"}
+{"type":"exchange","t":1793901724382,"cmd":"22101D","durationMs":46,"raw":"7B8 04 62 10 1D 01 \r\r"}
+{"type":"exchange","t":1793901724431,"cmd":"22101F","durationMs":112,"raw":"7B8 05 62 10 1F 80 80 \r\r"}
+{"type":"exchange","t":1793901724547,"cmd":"221020","durationMs":73,"raw":"7B8 04 62 10 20 00 \r\r"}
+{"type":"exchange","t":1793901724624,"cmd":"221021","durationMs":154,"raw":"7B8 04 62 10 21 00 \r\r"}
+{"type":"exchange","t":1793901724781,"cmd":"221022","durationMs":61,"raw":"7B8 07 62 10 22 01 01 01 01 \r\r"}
+{"type":"exchange","t":1793901724844,"cmd":"221023","durationMs":109,"raw":"7B8 05 62 10 23 00 00 \r\r"}
+{"type":"exchange","t":1793901724957,"cmd":"221024","durationMs":66,"raw":"7B8 04 62 10 24 00 \r\r"}
+{"type":"exchange","t":1793901725026,"cmd":"221025","durationMs":86,"raw":"7B8 04 62 10 25 0F \r\r"}
+{"type":"exchange","t":1793901725115,"cmd":"221026","durationMs":151,"raw":"7B8 04 62 10 26 0A \r\r"}
+{"type":"exchange","t":1793901725271,"cmd":"221029","durationMs":119,"raw":"7B8 04 62 10 29 30 \r\r"}
+{"type":"exchange","t":1793901725393,"cmd":"22102D","durationMs":97,"raw":"7B8 10 13 62 10 2D 30 10 FF \r7B8 21 00 FF 00 7D 00 EF 24 \r7B8 22 C0 00 10 10 60 40 00 \r\r"}
+{"type":"exchange","t":1793901725494,"cmd":"22102F","durationMs":69,"raw":"7B8 10 0B 62 10 2F 07 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901725568,"cmd":"221030","durationMs":263,"raw":"7B8 07 62 10 30 FF 00 0A 00 \r\r"}
+{"type":"exchange","t":1793901725837,"cmd":"221031","durationMs":178,"raw":"7B8 05 62 10 31 60 60 \r\r"}
+{"type":"exchange","t":1793901726019,"cmd":"221032","durationMs":214,"raw":"7B8 04 62 10 32 88 \r\r"}
+{"type":"exchange","t":1793901726236,"cmd":"221034","durationMs":236,"raw":"7B8 05 62 10 34 88 88 \r\r"}
+{"type":"exchange","t":1793901726476,"cmd":"221035","durationMs":192,"raw":"7B8 05 62 10 35 26 27 \r\r"}
+{"type":"exchange","t":1793901726671,"cmd":"221036","durationMs":198,"raw":"7B8 05 62 10 36 26 26 \r\r"}
+{"type":"exchange","t":1793901726872,"cmd":"221038","durationMs":161,"raw":"7B8 04 62 10 38 3A \r\r"}
+{"type":"exchange","t":1793901727037,"cmd":"221039","durationMs":202,"raw":"7B8 04 62 10 39 00 \r\r"}
+{"type":"exchange","t":1793901727244,"cmd":"22103A","durationMs":205,"raw":"7B8 04 62 10 3A 01 \r\r"}
+{"type":"exchange","t":1793901727452,"cmd":"22103C","durationMs":213,"raw":"7B8 05 62 10 3C 17 17 \r\r"}
+{"type":"exchange","t":1793901727668,"cmd":"221045","durationMs":57,"raw":"7B8 05 62 10 45 00 00 \r\r"}
+{"type":"exchange","t":1793901727728,"cmd":"221046","durationMs":195,"raw":"7B8 10 0F 62 10 46 9F 16 FF \r7B8 21 00 0C 00 FF 00 78 28 \r7B8 22 40 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901727931,"cmd":"22104C","durationMs":165,"raw":"7B8 04 62 10 4C 02 \r\r"}
+{"type":"exchange","t":1793901728099,"cmd":"221054","durationMs":193,"raw":"7B8 05 62 10 54 00 00 \r\r"}
+{"type":"exchange","t":1793901728295,"cmd":"221055","durationMs":202,"raw":"7B8 05 62 10 55 00 00 \r\r"}
+{"type":"exchange","t":1793901728501,"cmd":"22105C","durationMs":159,"raw":"7B8 04 62 10 5C E8 \r\r"}
+{"type":"exchange","t":1793901728663,"cmd":"221066","durationMs":162,"raw":"7B8 06 62 10 66 81 88 88 \r\r"}
+{"type":"exchange","t":1793901728827,"cmd":"221070","durationMs":407,"raw":"7B8 05 62 10 70 48 47 \r\r"}
+{"type":"exchange","t":1793901729238,"cmd":"221081","durationMs":172,"raw":"7B8 05 62 10 81 FF F5 \r\r"}
+{"type":"exchange","t":1793901729412,"cmd":"221082","durationMs":225,"raw":"7B8 05 62 10 82 FF F4 \r\r"}
+{"type":"exchange","t":1793901729641,"cmd":"221083","durationMs":336,"raw":"7B8 05 62 10 83 00 04 \r\r"}
+{"type":"exchange","t":1793901729980,"cmd":"221084","durationMs":169,"raw":"7B8 05 62 10 84 FF F0 \r\r"}
+{"type":"exchange","t":1793901730152,"cmd":"2210A1","durationMs":209,"raw":"7B8 05 62 10 A1 7F FF \r\r"}
+{"type":"exchange","t":1793901730364,"cmd":"2210A2","durationMs":248,"raw":"7B8 05 62 10 A2 FF 97 \r\r"}
+{"type":"exchange","t":1793901730615,"cmd":"2210A3","durationMs":175,"raw":"7B8 04 62 10 A3 00 \r\r"}
+{"type":"exchange","t":1793901730793,"cmd":"2210A4","durationMs":198,"raw":"7B8 04 62 10 A4 00 \r\r"}
+{"type":"exchange","t":1793901730994,"cmd":"2210A5","durationMs":208,"raw":"7B8 05 62 10 A5 01 DB \r\r"}
+{"type":"exchange","t":1793901731204,"cmd":"2210A6","durationMs":178,"raw":"7B8 05 62 10 A6 FF FD \r\r"}
+{"type":"exchange","t":1793901731388,"cmd":"2210A7","durationMs":181,"raw":"7B8 04 62 10 A7 00 \r\r"}
+{"type":"exchange","t":1793901731574,"cmd":"2210A8","durationMs":228,"raw":"7B8 04 62 10 A8 00 \r\r"}
+{"type":"exchange","t":1793901731804,"cmd":"2210A9","durationMs":240,"raw":"7B8 05 62 10 A9 7F FF \r\r"}
+{"type":"exchange","t":1793901732047,"cmd":"2210AA","durationMs":188,"raw":"7B8 05 62 10 AA 00 00 \r\r"}
+{"type":"exchange","t":1793901732238,"cmd":"2210AE","durationMs":183,"raw":"7B8 10 31 62 10 AE 35 33 33 \r7B8 21 31 34 5F 32 30 32 35 \r7B8 22 2D 30 35 2D 31 39 5F \r7B8 23 31 31 3A 34 32 3A 34 \r7B8 24 34 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r7B8 26 00 00 00 00 00 00 00 \r7B8 27 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901732426,"cmd":"2210B4","durationMs":191,"raw":"7B8 05 62 10 B4 C6 00 \r\r"}
+{"type":"exchange","t":1793901732621,"cmd":"2210B5","durationMs":498,"raw":"7B8 03 7F 22 78 \r7B8 05 62 10 B5 80 00 \r\r"}
+{"type":"exchange","t":1793901733123,"cmd":"2210B6","durationMs":101,"raw":"7B8 05 62 10 B6 E0 00 \r\r"}
+{"type":"exchange","t":1793901733227,"cmd":"ATSH 7B0","durationMs":11,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901733240,"cmd":"ATCRA 7B8","durationMs":47,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901733291,"cmd":"ATFCSH 7B0","durationMs":12,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901733307,"cmd":"ATFCSD 30 00 00","durationMs":76,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901733385,"cmd":"ATFCSM 1","durationMs":11,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901733400,"cmd":"221000","durationMs":137,"raw":"7B8 10 23 62 10 00 7B ED C4 \r7B8 21 6B FC 8B DD D0 0C 10 \r7B8 22 18 10 04 01 00 00 F0 \r7B8 23 00 00 00 FF C4 1C 00 \r7B8 24 00 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901733541,"cmd":"221002","durationMs":153,"raw":"7B8 10 0B 62 10 02 00 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901733698,"cmd":"221003","durationMs":136,"raw":"7B8 07 62 10 03 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901733838,"cmd":"221004","durationMs":80,"raw":"7B8 04 62 10 04 0A \r\r"}
+{"type":"exchange","t":1793901733921,"cmd":"221005","durationMs":120,"raw":"7B8 04 62 10 05 00 \r\r"}
+{"type":"exchange","t":1793901734044,"cmd":"221007","durationMs":157,"raw":"7B8 04 62 10 07 1E \r\r"}
+{"type":"exchange","t":1793901734204,"cmd":"221008","durationMs":173,"raw":"7B8 05 62 10 08 00 00 \r\r"}
+{"type":"exchange","t":1793901734380,"cmd":"221009","durationMs":107,"raw":"7B8 05 62 10 09 00 00 \r\r"}
+{"type":"exchange","t":1793901734490,"cmd":"22100A","durationMs":126,"raw":"7B8 04 62 10 0A 80 \r\r"}
+{"type":"exchange","t":1793901734620,"cmd":"22100B","durationMs":48,"raw":"7B8 04 62 10 0B 80 \r\r"}
+{"type":"exchange","t":1793901734671,"cmd":"22100D","durationMs":189,"raw":"7B8 05 62 10 0D 83 66 \r\r"}
+{"type":"exchange","t":1793901734863,"cmd":"22100E","durationMs":128,"raw":"7B8 05 62 10 0E 7F E2 \r\r"}
+{"type":"exchange","t":1793901734994,"cmd":"221010","durationMs":45,"raw":"7B8 04 62 10 10 00 \r\r"}
+{"type":"exchange","t":1793901735043,"cmd":"221011","durationMs":122,"raw":"7B8 04 62 10 11 29 \r\r"}
+{"type":"exchange","t":1793901735171,"cmd":"221012","durationMs":214,"raw":"7B8 05 62 10 12 00 00 \r\r"}
+{"type":"exchange","t":1793901735389,"cmd":"221016","durationMs":58,"raw":"7B8 04 62 10 16 00 \r\r"}
+{"type":"exchange","t":1793901735451,"cmd":"22101A","durationMs":113,"raw":"7B8 04 62 10 1A 0D \r\r"}
+{"type":"exchange","t":1793901735567,"cmd":"22101B","durationMs":131,"raw":"7B8 04 62 10 1B 00 \r\r"}
+{"type":"exchange","t":1793901735701,"cmd":"22101D","durationMs":147,"raw":"7B8 04 62 10 1D 01 \r\r"}
+{"type":"exchange","t":1793901735851,"cmd":"22101F","durationMs":138,"raw":"7B8 05 62 10 1F 80 80 \r\r"}
+{"type":"exchange","t":1793901735992,"cmd":"221020","durationMs":84,"raw":"7B8 04 62 10 20 00 \r\r"}
+{"type":"exchange","t":1793901736079,"cmd":"221021","durationMs":145,"raw":"7B8 04 62 10 21 00 \r\r"}
+{"type":"exchange","t":1793901736227,"cmd":"221022","durationMs":146,"raw":"7B8 07 62 10 22 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901736376,"cmd":"221023","durationMs":60,"raw":"7B8 05 62 10 23 00 00 \r\r"}
+{"type":"exchange","t":1793901736439,"cmd":"221024","durationMs":110,"raw":"7B8 04 62 10 24 00 \r\r"}
+{"type":"exchange","t":1793901736555,"cmd":"221025","durationMs":78,"raw":"7B8 04 62 10 25 12 \r\r"}
+{"type":"exchange","t":1793901736637,"cmd":"221026","durationMs":68,"raw":"7B8 04 62 10 26 0A \r\r"}
+{"type":"exchange","t":1793901736708,"cmd":"221029","durationMs":46,"raw":"7B8 04 62 10 29 30 \r\r"}
+{"type":"exchange","t":1793901736757,"cmd":"22102D","durationMs":130,"raw":"7B8 10 13 62 10 2D 30 30 FF \r7B8 21 20 FF 00 7D 00 EF 25 \r7B8 22 C0 00 10 10 60 40 00 \r\r"}
+{"type":"exchange","t":1793901736891,"cmd":"22102F","durationMs":52,"raw":"7B8 10 0B 62 10 2F 07 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901736946,"cmd":"221030","durationMs":71,"raw":"7B8 07 62 10 30 FF 00 0A 00 \r\r"}
+{"type":"exchange","t":1793901737020,"cmd":"221031","durationMs":165,"raw":"7B8 05 62 10 31 60 60 \r\r"}
+{"type":"exchange","t":1793901737188,"cmd":"221032","durationMs":149,"raw":"7B8 04 62 10 32 87 \r\r"}
+{"type":"exchange","t":1793901737339,"cmd":"221034","durationMs":177,"raw":"7B8 05 62 10 34 88 88 \r\r"}
+{"type":"event","t":1793901737520,"event":"pedal_phase","detail":"FULL"}
+{"type":"exchange","t":1793901737521,"cmd":"ATSH 7B0","durationMs":195,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901737722,"cmd":"ATCRA 7B8","durationMs":186,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901737910,"cmd":"ATFCSH 7B0","durationMs":54,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901737967,"cmd":"ATFCSD 30 00 00","durationMs":13,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901737983,"cmd":"ATFCSM 1","durationMs":12,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901737998,"cmd":"221000","durationMs":367,"raw":"7B8 10 23 62 10 00 7B ED C4 \r7B8 21 6B FC 8B DD D0 0C 10 \r7B8 22 18 10 04 01 00 00 F0 \r7B8 23 00 00 00 FF C4 1C 00 \r7B8 24 00 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901738370,"cmd":"221002","durationMs":197,"raw":"7B8 10 0B 62 10 02 00 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901738570,"cmd":"221003","durationMs":220,"raw":"7B8 07 62 10 03 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901738794,"cmd":"221004","durationMs":177,"raw":"7B8 04 62 10 04 45 \r\r"}
+{"type":"exchange","t":1793901738974,"cmd":"221005","durationMs":168,"raw":"7B8 04 62 10 05 00 \r\r"}
+{"type":"exchange","t":1793901739145,"cmd":"221007","durationMs":221,"raw":"7B8 04 62 10 07 21 \r\r"}
+{"type":"exchange","t":1793901739370,"cmd":"221008","durationMs":401,"raw":"7B8 05 62 10 08 00 00 \r\r"}
+{"type":"exchange","t":1793901739775,"cmd":"221009","durationMs":178,"raw":"7B8 05 62 10 09 00 00 \r\r"}
+{"type":"exchange","t":1793901739956,"cmd":"22100A","durationMs":200,"raw":"7B8 04 62 10 0A 80 \r\r"}
+{"type":"exchange","t":1793901740158,"cmd":"22100B","durationMs":367,"raw":"7B8 04 62 10 0B 80 \r\r"}
+{"type":"exchange","t":1793901740529,"cmd":"22100D","durationMs":192,"raw":"7B8 05 62 10 0D 83 66 \r\r"}
+{"type":"exchange","t":1793901740724,"cmd":"22100E","durationMs":310,"raw":"7B8 05 62 10 0E 7F E2 \r\r"}
+{"type":"exchange","t":1793901741038,"cmd":"221010","durationMs":391,"raw":"7B8 04 62 10 10 00 \r\r"}
+{"type":"exchange","t":1793901741432,"cmd":"221011","durationMs":176,"raw":"7B8 04 62 10 11 00 \r\r"}
+{"type":"exchange","t":1793901741610,"cmd":"221012","durationMs":203,"raw":"7B8 05 62 10 12 00 00 \r\r"}
+{"type":"exchange","t":1793901741817,"cmd":"221016","durationMs":230,"raw":"7B8 04 62 10 16 00 \r\r"}
+{"type":"exchange","t":1793901742049,"cmd":"22101A","durationMs":186,"raw":"7B8 04 62 10 1A 0D \r\r"}
+{"type":"exchange","t":1793901742239,"cmd":"22101B","durationMs":177,"raw":"7B8 04 62 10 1B 00 \r\r"}
+{"type":"exchange","t":1793901742420,"cmd":"22101D","durationMs":174,"raw":"7B8 04 62 10 1D 01 \r\r"}
+{"type":"exchange","t":1793901742597,"cmd":"22101F","durationMs":142,"raw":"7B8 05 62 10 1F 80 80 \r\r"}
+{"type":"exchange","t":1793901742742,"cmd":"221020","durationMs":153,"raw":"7B8 04 62 10 20 00 \r\r"}
+{"type":"exchange","t":1793901742898,"cmd":"221021","durationMs":202,"raw":"7B8 04 62 10 21 00 \r\r"}
+{"type":"exchange","t":1793901743103,"cmd":"221022","durationMs":283,"raw":"7B8 07 62 10 22 4E 4E 4E 4E \r\r"}
+{"type":"exchange","t":1793901743390,"cmd":"221023","durationMs":188,"raw":"7B8 05 62 10 23 00 00 \r\r"}
+{"type":"exchange","t":1793901743581,"cmd":"221024","durationMs":183,"raw":"7B8 04 62 10 24 00 \r\r"}
+{"type":"exchange","t":1793901743767,"cmd":"221025","durationMs":206,"raw":"7B8 04 62 10 25 13 \r\r"}
+{"type":"exchange","t":1793901743976,"cmd":"221026","durationMs":330,"raw":"7B8 04 62 10 26 0A \r\r"}
+{"type":"exchange","t":1793901744310,"cmd":"221029","durationMs":86,"raw":"7B8 04 62 10 29 30 \r\r"}
+{"type":"exchange","t":1793901744399,"cmd":"22102D","durationMs":149,"raw":"7B8 10 13 62 10 2D 30 30 FF \r7B8 21 20 FF 00 7D 00 EF 25 \r7B8 22 C0 00 10 10 60 40 00 \r\r"}
+{"type":"exchange","t":1793901744552,"cmd":"22102F","durationMs":72,"raw":"7B8 10 0B 62 10 2F 07 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901744628,"cmd":"221030","durationMs":72,"raw":"7B8 07 62 10 30 FF 00 0A 00 \r\r"}
+{"type":"exchange","t":1793901744703,"cmd":"221031","durationMs":223,"raw":"7B8 05 62 10 31 60 60 \r\r"}
+{"type":"exchange","t":1793901744929,"cmd":"221032","durationMs":57,"raw":"7B8 04 62 10 32 88 \r\r"}
+{"type":"exchange","t":1793901744989,"cmd":"221034","durationMs":108,"raw":"7B8 05 62 10 34 87 87 \r\r"}
+{"type":"exchange","t":1793901745100,"cmd":"221035","durationMs":68,"raw":"7B8 05 62 10 35 26 27 \r\r"}
+{"type":"exchange","t":1793901745171,"cmd":"221036","durationMs":136,"raw":"7B8 05 62 10 36 26 26 \r\r"}
+{"type":"exchange","t":1793901745310,"cmd":"221038","durationMs":344,"raw":"7B8 04 62 10 38 3A \r\r"}
+{"type":"exchange","t":1793901745657,"cmd":"221039","durationMs":268,"raw":"7B8 04 62 10 39 00 \r\r"}
+{"type":"exchange","t":1793901745928,"cmd":"22103A","durationMs":176,"raw":"7B8 04 62 10 3A 01 \r\r"}
+{"type":"exchange","t":1793901746107,"cmd":"22103C","durationMs":158,"raw":"7B8 05 62 10 3C 17 17 \r\r"}
+{"type":"exchange","t":1793901746267,"cmd":"221045","durationMs":167,"raw":"7B8 05 62 10 45 00 00 \r\r"}
+{"type":"exchange","t":1793901746437,"cmd":"221046","durationMs":174,"raw":"7B8 10 0F 62 10 46 9F 16 FF \r7B8 21 00 0C 00 FF 00 78 28 \r7B8 22 40 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901746615,"cmd":"22104C","durationMs":193,"raw":"7B8 04 62 10 4C 0E \r\r"}
+{"type":"exchange","t":1793901746811,"cmd":"221054","durationMs":160,"raw":"7B8 05 62 10 54 00 00 \r\r"}
+{"type":"exchange","t":1793901746975,"cmd":"221055","durationMs":247,"raw":"7B8 05 62 10 55 00 00 \r\r"}
+{"type":"exchange","t":1793901747224,"cmd":"22105C","durationMs":205,"raw":"7B8 04 62 10 5C E8 \r\r"}
+{"type":"exchange","t":1793901747432,"cmd":"221066","durationMs":172,"raw":"7B8 06 62 10 66 81 88 88 \r\r"}
+{"type":"exchange","t":1793901747608,"cmd":"221070","durationMs":160,"raw":"7B8 05 62 10 70 73 72 \r\r"}
+{"type":"exchange","t":1793901747771,"cmd":"221081","durationMs":94,"raw":"7B8 05 62 10 81 FF F2 \r\r"}
+{"type":"exchange","t":1793901747868,"cmd":"221082","durationMs":275,"raw":"7B8 05 62 10 82 FF F6 \r\r"}
+{"type":"exchange","t":1793901748146,"cmd":"221083","durationMs":167,"raw":"7B8 05 62 10 83 00 05 \r\r"}
+{"type":"exchange","t":1793901748316,"cmd":"221084","durationMs":192,"raw":"7B8 05 62 10 84 FF F0 \r\r"}
+{"type":"exchange","t":1793901748512,"cmd":"2210A1","durationMs":199,"raw":"7B8 05 62 10 A1 7F FF \r\r"}
+{"type":"exchange","t":1793901748714,"cmd":"2210A2","durationMs":190,"raw":"7B8 05 62 10 A2 FF 95 \r\r"}
+{"type":"exchange","t":1793901748907,"cmd":"2210A3","durationMs":340,"raw":"7B8 04 62 10 A3 00 \r\r"}
+{"type":"exchange","t":1793901749251,"cmd":"2210A4","durationMs":196,"raw":"7B8 04 62 10 A4 00 \r\r"}
+{"type":"exchange","t":1793901749450,"cmd":"2210A5","durationMs":224,"raw":"7B8 05 62 10 A5 01 DB \r\r"}
+{"type":"exchange","t":1793901749677,"cmd":"2210A6","durationMs":218,"raw":"7B8 05 62 10 A6 FF FD \r\r"}
+{"type":"exchange","t":1793901749898,"cmd":"2210A7","durationMs":154,"raw":"7B8 04 62 10 A7 00 \r\r"}
+{"type":"exchange","t":1793901750055,"cmd":"2210A8","durationMs":163,"raw":"7B8 04 62 10 A8 00 \r\r"}
+{"type":"exchange","t":1793901750221,"cmd":"2210A9","durationMs":200,"raw":"7B8 05 62 10 A9 7F FF \r\r"}
+{"type":"exchange","t":1793901750424,"cmd":"2210AA","durationMs":176,"raw":"7B8 05 62 10 AA 00 00 \r\r"}
+{"type":"exchange","t":1793901750603,"cmd":"2210AE","durationMs":184,"raw":"7B8 10 31 62 10 AE 35 33 33 \r7B8 21 31 34 5F 32 30 32 35 \r7B8 22 2D 30 35 2D 31 39 5F \r7B8 23 31 31 3A 34 32 3A 34 \r7B8 24 34 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r7B8 26 00 00 00 00 00 00 00 \r7B8 27 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901750793,"cmd":"2210B4","durationMs":210,"raw":"7B8 05 62 10 B4 C6 00 \r\r"}
+{"type":"exchange","t":1793901751006,"cmd":"2210B5","durationMs":574,"raw":"7B8 03 7F 22 78 \r7B8 05 62 10 B5 80 00 \r\r"}
+{"type":"exchange","t":1793901751583,"cmd":"2210B6","durationMs":159,"raw":"7B8 05 62 10 B6 E0 00 \r\r"}
+{"type":"exchange","t":1793901751745,"cmd":"ATSH 7B0","durationMs":13,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901751761,"cmd":"ATCRA 7B8","durationMs":10,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901751773,"cmd":"ATFCSH 7B0","durationMs":12,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901751788,"cmd":"ATFCSD 30 00 00","durationMs":153,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901751943,"cmd":"ATFCSM 1","durationMs":12,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901751957,"cmd":"221000","durationMs":286,"raw":"7B8 10 23 62 10 00 7B ED C4 \r7B8 21 6B FC 8B DD D0 0C 10 \r7B8 22 18 10 04 01 00 00 F0 \r7B8 23 00 00 00 FF C4 1C 00 \r7B8 24 00 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901752247,"cmd":"221002","durationMs":126,"raw":"7B8 10 0B 62 10 02 00 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901752377,"cmd":"221003","durationMs":172,"raw":"7B8 07 62 10 03 00 00 00 00 \r\r"}
+{"type":"event","t":1793901752552,"event":"pedal_phase","detail":"RELEASED_AGAIN"}
+{"type":"exchange","t":1793901752553,"cmd":"ATSH 7B0","durationMs":99,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901752655,"cmd":"ATCRA 7B8","durationMs":11,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901752667,"cmd":"ATFCSH 7B0","durationMs":12,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901752681,"cmd":"ATFCSD 30 00 00","durationMs":49,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901752733,"cmd":"ATFCSM 1","durationMs":78,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901752813,"cmd":"221000","durationMs":135,"raw":"7B8 10 23 62 10 00 7B ED C4 \r7B8 21 6B FC 8B DD D0 0C 10 \r7B8 22 18 10 04 01 00 00 F0 \r7B8 23 00 00 00 FF C4 1C 00 \r7B8 24 00 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901752952,"cmd":"221002","durationMs":143,"raw":"7B8 10 0B 62 10 02 00 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901753099,"cmd":"221003","durationMs":79,"raw":"7B8 07 62 10 03 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901753182,"cmd":"221004","durationMs":116,"raw":"7B8 04 62 10 04 3C \r\r"}
+{"type":"exchange","t":1793901753303,"cmd":"221005","durationMs":75,"raw":"7B8 04 62 10 05 00 \r\r"}
+{"type":"exchange","t":1793901753381,"cmd":"221007","durationMs":110,"raw":"7B8 04 62 10 07 0D \r\r"}
+{"type":"exchange","t":1793901753494,"cmd":"221008","durationMs":80,"raw":"7B8 05 62 10 08 FF 00 \r\r"}
+{"type":"exchange","t":1793901753577,"cmd":"221009","durationMs":52,"raw":"7B8 05 62 10 09 00 00 \r\r"}
+{"type":"exchange","t":1793901753633,"cmd":"22100A","durationMs":61,"raw":"7B8 04 62 10 0A 80 \r\r"}
+{"type":"exchange","t":1793901753697,"cmd":"22100B","durationMs":109,"raw":"7B8 04 62 10 0B 80 \r\r"}
+{"type":"exchange","t":1793901753809,"cmd":"22100D","durationMs":56,"raw":"7B8 05 62 10 0D 83 66 \r\r"}
+{"type":"exchange","t":1793901753868,"cmd":"22100E","durationMs":123,"raw":"7B8 05 62 10 0E 7F E2 \r\r"}
+{"type":"exchange","t":1793901753994,"cmd":"221010","durationMs":202,"raw":"7B8 04 62 10 10 00 \r\r"}
+{"type":"exchange","t":1793901754199,"cmd":"221011","durationMs":207,"raw":"7B8 04 62 10 11 29 \r\r"}
+{"type":"exchange","t":1793901754410,"cmd":"221012","durationMs":179,"raw":"7B8 05 62 10 12 00 00 \r\r"}
+{"type":"exchange","t":1793901754592,"cmd":"221016","durationMs":195,"raw":"7B8 04 62 10 16 00 \r\r"}
+{"type":"exchange","t":1793901754790,"cmd":"22101A","durationMs":230,"raw":"7B8 04 62 10 1A 0D \r\r"}
+{"type":"exchange","t":1793901755023,"cmd":"22101B","durationMs":353,"raw":"7B8 04 62 10 1B 00 \r\r"}
+{"type":"exchange","t":1793901755378,"cmd":"22101D","durationMs":232,"raw":"7B8 04 62 10 1D 01 \r\r"}
+{"type":"exchange","t":1793901755614,"cmd":"22101F","durationMs":177,"raw":"7B8 05 62 10 1F 80 80 \r\r"}
+{"type":"exchange","t":1793901755793,"cmd":"221020","durationMs":199,"raw":"7B8 04 62 10 20 00 \r\r"}
+{"type":"exchange","t":1793901755996,"cmd":"221021","durationMs":192,"raw":"7B8 04 62 10 21 00 \r\r"}
+{"type":"exchange","t":1793901756190,"cmd":"221022","durationMs":258,"raw":"7B8 07 62 10 22 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901756452,"cmd":"221023","durationMs":241,"raw":"7B8 05 62 10 23 00 00 \r\r"}
+{"type":"exchange","t":1793901756696,"cmd":"221024","durationMs":200,"raw":"7B8 04 62 10 24 00 \r\r"}
+{"type":"exchange","t":1793901756899,"cmd":"221025","durationMs":207,"raw":"7B8 04 62 10 25 16 \r\r"}
+{"type":"exchange","t":1793901757108,"cmd":"221026","durationMs":167,"raw":"7B8 04 62 10 26 0A \r\r"}
+{"type":"exchange","t":1793901757278,"cmd":"221029","durationMs":189,"raw":"7B8 04 62 10 29 30 \r\r"}
+{"type":"exchange","t":1793901757471,"cmd":"22102D","durationMs":181,"raw":"7B8 10 13 62 10 2D 30 10 FF \r7B8 21 00 FF 00 7D 00 EF 24 \r7B8 22 C0 00 10 10 60 40 00 \r\r"}
+{"type":"exchange","t":1793901757656,"cmd":"22102F","durationMs":170,"raw":"7B8 10 0B 62 10 2F 07 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901757830,"cmd":"221030","durationMs":207,"raw":"7B8 07 62 10 30 FF 00 0A 00 \r\r"}
+{"type":"exchange","t":1793901758040,"cmd":"221031","durationMs":196,"raw":"7B8 05 62 10 31 60 60 \r\r"}
+{"type":"exchange","t":1793901758239,"cmd":"221032","durationMs":191,"raw":"7B8 04 62 10 32 88 \r\r"}
+{"type":"exchange","t":1793901758433,"cmd":"221034","durationMs":170,"raw":"7B8 05 62 10 34 88 88 \r\r"}
+{"type":"exchange","t":1793901758606,"cmd":"221035","durationMs":60,"raw":"7B8 05 62 10 35 26 27 \r\r"}
+{"type":"exchange","t":1793901758669,"cmd":"221036","durationMs":181,"raw":"7B8 05 62 10 36 26 26 \r\r"}
+{"type":"exchange","t":1793901758853,"cmd":"221038","durationMs":233,"raw":"7B8 04 62 10 38 3A \r\r"}
+{"type":"exchange","t":1793901759088,"cmd":"221039","durationMs":152,"raw":"7B8 04 62 10 39 00 \r\r"}
+{"type":"exchange","t":1793901759243,"cmd":"22103A","durationMs":146,"raw":"7B8 04 62 10 3A 01 \r\r"}
+{"type":"exchange","t":1793901759393,"cmd":"22103C","durationMs":132,"raw":"7B8 05 62 10 3C 17 17 \r\r"}
+{"type":"exchange","t":1793901759527,"cmd":"221045","durationMs":79,"raw":"7B8 05 62 10 45 00 00 \r\r"}
+{"type":"exchange","t":1793901759611,"cmd":"221046","durationMs":137,"raw":"7B8 10 0F 62 10 46 9F 16 FF \r7B8 21 00 0C 00 FF 00 78 28 \r7B8 22 40 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901759751,"cmd":"22104C","durationMs":179,"raw":"7B8 04 62 10 4C 00 \r\r"}
+{"type":"exchange","t":1793901759933,"cmd":"221054","durationMs":205,"raw":"7B8 05 62 10 54 00 00 \r\r"}
+{"type":"exchange","t":1793901760142,"cmd":"221055","durationMs":205,"raw":"7B8 05 62 10 55 00 00 \r\r"}
+{"type":"exchange","t":1793901760349,"cmd":"22105C","durationMs":211,"raw":"7B8 04 62 10 5C E8 \r\r"}
+{"type":"exchange","t":1793901760563,"cmd":"221066","durationMs":205,"raw":"7B8 06 62 10 66 81 88 88 \r\r"}
+{"type":"exchange","t":1793901760772,"cmd":"221070","durationMs":323,"raw":"7B8 05 62 10 70 41 40 \r\r"}
+{"type":"exchange","t":1793901761098,"cmd":"221081","durationMs":112,"raw":"7B8 05 62 10 81 FF F4 \r\r"}
+{"type":"exchange","t":1793901761212,"cmd":"221082","durationMs":64,"raw":"7B8 05 62 10 82 FF F5 \r\r"}
+{"type":"exchange","t":1793901761279,"cmd":"221083","durationMs":120,"raw":"7B8 05 62 10 83 00 03 \r\r"}
+{"type":"exchange","t":1793901761402,"cmd":"221084","durationMs":175,"raw":"7B8 05 62 10 84 FF F0 \r\r"}
+{"type":"exchange","t":1793901761579,"cmd":"2210A1","durationMs":151,"raw":"7B8 05 62 10 A1 7F FF \r\r"}
+{"type":"exchange","t":1793901761734,"cmd":"2210A2","durationMs":84,"raw":"7B8 05 62 10 A2 FF 96 \r\r"}
+{"type":"exchange","t":1793901761820,"cmd":"2210A3","durationMs":85,"raw":"7B8 04 62 10 A3 00 \r\r"}
+{"type":"exchange","t":1793901761909,"cmd":"2210A4","durationMs":216,"raw":"7B8 04 62 10 A4 00 \r\r"}
+{"type":"exchange","t":1793901762128,"cmd":"2210A5","durationMs":84,"raw":"7B8 05 62 10 A5 01 DB \r\r"}
+{"type":"exchange","t":1793901762215,"cmd":"2210A6","durationMs":53,"raw":"7B8 05 62 10 A6 FF FD \r\r"}
+{"type":"exchange","t":1793901762271,"cmd":"2210A7","durationMs":88,"raw":"7B8 04 62 10 A7 00 \r\r"}
+{"type":"exchange","t":1793901762362,"cmd":"2210A8","durationMs":147,"raw":"7B8 04 62 10 A8 00 \r\r"}
+{"type":"exchange","t":1793901762512,"cmd":"2210A9","durationMs":125,"raw":"7B8 05 62 10 A9 7F FF \r\r"}
+{"type":"exchange","t":1793901762640,"cmd":"2210AA","durationMs":77,"raw":"7B8 05 62 10 AA 00 00 \r\r"}
+{"type":"exchange","t":1793901762720,"cmd":"2210AE","durationMs":142,"raw":"7B8 10 31 62 10 AE 35 33 33 \r7B8 21 31 34 5F 32 30 32 35 \r7B8 22 2D 30 35 2D 31 39 5F \r7B8 23 31 31 3A 34 32 3A 34 \r7B8 24 34 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r7B8 26 00 00 00 00 00 00 00 \r7B8 27 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901762867,"cmd":"2210B4","durationMs":72,"raw":"7B8 05 62 10 B4 C6 00 \r\r"}
+{"type":"exchange","t":1793901762942,"cmd":"2210B5","durationMs":518,"raw":"7B8 03 7F 22 78 \r7B8 05 62 10 B5 80 00 \r\r"}
+{"type":"exchange","t":1793901763464,"cmd":"2210B6","durationMs":121,"raw":"7B8 05 62 10 B6 E0 00 \r\r"}
+{"type":"exchange","t":1793901763588,"cmd":"ATSH 7B0","durationMs":9,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901763598,"cmd":"ATCRA 7B8","durationMs":10,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901763610,"cmd":"ATFCSH 7B0","durationMs":13,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901763625,"cmd":"ATFCSD 30 00 00","durationMs":10,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901763637,"cmd":"ATFCSM 1","durationMs":78,"raw":"OK\r\r"}
+{"type":"exchange","t":1793901763717,"cmd":"221000","durationMs":103,"raw":"7B8 10 23 62 10 00 7B ED C4 \r7B8 21 6B FC 8B DD D0 0C 10 \r7B8 22 18 10 04 01 00 00 F0 \r7B8 23 00 00 00 FF C4 1C 00 \r7B8 24 00 00 00 00 00 00 00 \r7B8 25 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901763824,"cmd":"221002","durationMs":61,"raw":"7B8 10 0B 62 10 02 00 00 00 \r7B8 21 00 00 00 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901763888,"cmd":"221003","durationMs":91,"raw":"7B8 07 62 10 03 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901763982,"cmd":"221004","durationMs":221,"raw":"7B8 04 62 10 04 0A \r\r"}
+{"type":"exchange","t":1793901764205,"cmd":"221005","durationMs":169,"raw":"7B8 04 62 10 05 00 \r\r"}
+{"type":"exchange","t":1793901764378,"cmd":"221007","durationMs":51,"raw":"7B8 04 62 10 07 1E \r\r"}
+{"type":"exchange","t":1793901764432,"cmd":"221008","durationMs":62,"raw":"7B8 05 62 10 08 00 00 \r\r"}
+{"type":"exchange","t":1793901764497,"cmd":"221009","durationMs":58,"raw":"7B8 05 62 10 09 00 00 \r\r"}
+{"type":"exchange","t":1793901764558,"cmd":"22100A","durationMs":116,"raw":"7B8 04 62 10 0A 80 \r\r"}
+{"type":"exchange","t":1793901764677,"cmd":"22100B","durationMs":72,"raw":"7B8 04 62 10 0B 80 \r\r"}
+{"type":"exchange","t":1793901764752,"cmd":"22100D","durationMs":93,"raw":"7B8 05 62 10 0D 83 66 \r\r"}
+{"type":"exchange","t":1793901764850,"cmd":"22100E","durationMs":49,"raw":"7B8 05 62 10 0E 7F E2 \r\r"}
+{"type":"exchange","t":1793901764902,"cmd":"221010","durationMs":93,"raw":"7B8 04 62 10 10 00 \r\r"}
+{"type":"exchange","t":1793901764997,"cmd":"221011","durationMs":67,"raw":"7B8 04 62 10 11 29 \r\r"}
+{"type":"exchange","t":1793901765067,"cmd":"221012","durationMs":79,"raw":"7B8 05 62 10 12 00 00 \r\r"}
+{"type":"exchange","t":1793901765148,"cmd":"221016","durationMs":265,"raw":"7B8 04 62 10 16 00 \r\r"}
+{"type":"exchange","t":1793901765416,"cmd":"22101A","durationMs":199,"raw":"7B8 04 62 10 1A 0D \r\r"}
+{"type":"exchange","t":1793901765618,"cmd":"22101B","durationMs":202,"raw":"7B8 04 62 10 1B 00 \r\r"}
+{"type":"exchange","t":1793901765823,"cmd":"22101D","durationMs":178,"raw":"7B8 04 62 10 1D 01 \r\r"}
+{"type":"exchange","t":1793901766004,"cmd":"22101F","durationMs":181,"raw":"7B8 05 62 10 1F 80 80 \r\r"}
+{"type":"exchange","t":1793901766188,"cmd":"221020","durationMs":238,"raw":"7B8 04 62 10 20 00 \r\r"}
+{"type":"exchange","t":1793901766428,"cmd":"221021","durationMs":217,"raw":"7B8 04 62 10 21 00 \r\r"}
+{"type":"exchange","t":1793901766648,"cmd":"221022","durationMs":203,"raw":"7B8 07 62 10 22 00 00 00 00 \r\r"}
+{"type":"exchange","t":1793901766854,"cmd":"221023","durationMs":168,"raw":"7B8 05 62 10 23 00 00 \r\r"}
+{"type":"exchange","t":1793901767025,"cmd":"221024","durationMs":204,"raw":"7B8 04 62 10 24 00 \r\r"}
+{"type":"exchange","t":1793901767232,"cmd":"221025","durationMs":209,"raw":"7B8 04 62 10 25 18 \r\r"}
+{"type":"exchange","t":1793901767444,"cmd":"221026","durationMs":180,"raw":"7B8 04 62 10 26 0A \r\r"}
+{"type":"exchange","t":1793901767626,"cmd":"ATZ","durationMs":963,"raw":"\r\rELM327 v1.4b\r\r"}
+{"type":"event","t":1793901768620,"event":"exploration","detail":"fine: 12 identificativi cambiano col pedale"}

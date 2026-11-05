@@ -15,16 +15,18 @@
   file esportato finora. **0.2.1** corregge (D-018): conferma «Inizia il pedale» e «Ripeti solo il pedale» che riusa la
   mappa salvata (anche quelle della 0.2.0). Test JVM: attesa della conferma, riuso della mappa senza richieste di mappa,
   mappa incompleta non riutilizzabile.
+- **Prova 0.2.1 (2026-11-05)**: «Ripeti solo il pedale» ha riusato la mappa delle 18:35 (66 identificativi, tutti 7B0)
+  e completato le quattro fasi; l'app indica 12 identificativi che cambiano col pedale. Candidati forti: `221022`
+  (pressione alle 4 ruote), `221070` (corsa del pedale, 2 sensori), `22104C`, `22102D` (pedale premuto). Dettagli in
+  `SIGNALS.md`; la registrazione è un test permanente.
 - **Non verificato**: rendering della schermata durante mappa e pedale sul telefono, risposte reali di 7E2/7B0 alle richieste mode 21/22,
   durata reale della mappa. Nessun segnale dei freni è ancora noto.
 
 ## Problema aperto
-Non sappiamo se la Yaris 2026 risponde a mode 21/22 su 7E2 e 7B0, né quali dati descrivano pedale, pressione o rigenerazione.
+La 7B0 (freni) dà candidati forti per pedale e pressione d'attrito, ma nessun dato distingue ancora la rigenerazione: la
+7E2 non risponde nell'intervallo provato e da fermo tutta la frenata è ad attrito.
 
 ## Prossimo passo
-1. Il proprietario installa la 0.2.1 ed esegue **Esplora freni** da fermo (`README.md`): con «Ripeti solo il pedale»
-   riusa la mappa già fatta; poi esporta il file (meglio anche quello della mappa).
-2. L'agente analizza la registrazione (identificativi che rispondono, byte che cambiano col pedale), la aggiunge ai
-   test e aggiorna `SIGNALS.md`.
-3. Si decide con il proprietario: mappa più ampia del mode 22, altre centraline (7E0, 7E3, 7E6) o prova in marcia per la
-   rigenerazione.
+Da decidere con il proprietario (prossimo incremento): prova in marcia che legge solo i candidati 7B0 (`221022`,
+`221070`, `22104C`, `22102D`) più velocità, molte volte al secondo, per vedere rigenerazione e attrito in frenata; oppure
+estendere la ricerca della rigenerazione (mode 22 fuori da `1000–1FFF` sulla 7E2, centraline 7E0/7E3/7E6).

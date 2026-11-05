@@ -30,7 +30,7 @@ Valori osservati: giri 1250–1475 (7E8 un po' diversa dalle altre), velocità 0
 |---|---|---|---|
 | Potenza batteria | Tensione e corrente HV | Car Scanner li legge già: definizioni da individuare e documentare con la fonte | da cercare |
 | Potenza termica | Potenza dalla centralina, oppure coppia **effettiva** del termico + giri | — | da cercare |
-| Indicatore frenata | Segnali che distinguano rigenerazione e intervento dell'attrito | Esplorazione freni (sotto) | esplorazione pronta (0.2.0), prova da fare |
+| Indicatore frenata | Segnali che distinguano rigenerazione e intervento dell'attrito | 7B0: `221022` pressione alle ruote, `221070` corsa del pedale, `22104C`, `22102D` (sotto) | risposta ricevuta da fermo; prova in marcia da fare |
 | Contesto | Velocità, pedale freno, altri | `010D` (sopra) | da cercare |
 
 ## Esplorazione freni (fase 3, primo passo — APK 0.2.0)
@@ -45,6 +45,31 @@ pressione: la distinzione rigenerazione/attrito richiede una prova in marcia.
 | 7E2 → 7EA (sistema ibrido) | mode 21 `2100–21FF`, mode 22 `221000–221FFF` | Prius Gen2: regen brake torque effettiva/richiesta in `21C3` su 7E2, 0–186 Nm (PriusChat PDF, Oguchi); Toyota recenti passate da mode 21 a mode 22 (fonte di seconda mano) | candidato |
 | 7B0 → 7B8 (freni / ABS) | come sopra | Prius Gen2: 7B0 = ABS brake (PriusChat PDF) | candidato |
 | Intervallo mode 22 `1000–1FFF` | — | liste comunitarie GR Yaris (`221xxx`, header 700/7C0): indizio debole | candidato |
+
+### Risultati sulla Yaris (2026-11-05, auto ferma in READY)
+- **Mappa delle 18:35** (0.2.0, file sul telefono `esplorazione-freni-20261105-183514.jsonl`, non ancora esportato):
+  **66 identificativi rispondono, tutti sulla 7B0 (freni) in mode 22 `221000–2210B6`**. La 7E2 non ha dato nessuna
+  risposta positiva nell'intervallo provato (non sappiamo se negativa o assente).
+- **Fasi del pedale** (0.2.1, `core/src/test/resources/recordings/2026-11-05-a34-esplorazione-pedale-0.2.1.jsonl`):
+  un giro dei 66 identificativi dura ~10 s, quindi 1–2 letture per fase da 15 s; prova unica, da ripetere.
+
+| Richiesta (7B0 → 7B8) | Rilasciato → Leggero → A fondo → Rilasciato | Ipotesi | Stato |
+|---|---|---|---|
+| `221022` | 4 byte uguali: `00` → `01` → `4E` → `00` | pressione idraulica alle 4 ruote (attrito), unità da trovare | risposta ricevuta |
+| `22104C` | `00` → `02` → `0E` → `00` | pressione del cilindro maestro o richiesta di frenata | risposta ricevuta |
+| `221070` | 2 byte quasi uguali: `41 3F` → `48 47` → `73 72` → `41 40` | corsa del pedale, due sensori ridondanti | risposta ricevuta |
+| `22102D` | bit `0x20` dei byte 2 e 4 acceso solo a pedale premuto | interruttore luci stop / pedale premuto | risposta ricevuta |
+| `221011` | `29` → `29` → `00` → `29` | sconosciuto (cambia solo a fondo) | risposta ricevuta |
+| `221004`, `221007` | cambiano a fondo e subito dopo il rilascio | forse pompa o accumulatore idraulico | risposta ricevuta |
+
+Variazioni di ±1–2 unità senza legame chiaro col pedale (rumore): `221034`, `221081–221083`, `2210A2`, `221032`;
+`221025` sale nel tempo (`0D` → `18`), indipendente dal pedale. `2210AE` contiene il testo ASCII
+`53314_2025-05-19_11:42:44` (probabile versione/data del software della centralina, non un VIN).
+
+**Per la frenata**: con l'auto ferma tutta la frenata è ad attrito. Per distinguere la rigenerazione serve una prova in
+marcia: nell'impianto Toyota la richiesta del conducente (corsa del pedale, `221070`) è divisa tra rigenerazione e
+attrito (pressione alle ruote, `221022`), quindi una richiesta alta con pressione bassa indicherebbe rigenerazione.
+È un'ipotesi da verificare, non un segnale validato.
 
 ## Fonti
 - OBDLink Family Reference and Programming Manual (FRPM): https://www.scantool.net/scantool/downloads/682/obdlink_frpm_f.pdf
