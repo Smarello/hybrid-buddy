@@ -7,8 +7,13 @@ sealed interface Decoded {
     data class Failure(val reason: String) : Decoded
 }
 
+/** A control unit addressed physically: requests go to [requestHeader], answers come from [responseHeader]. */
+data class EcuTarget(val requestHeader: String, val responseHeader: String)
+
 /**
  * A readable signal: request sent to the adapter and conversion of its answer.
+ * [target] null = functional addressing set by the adapter initialization (OBD-II broadcast);
+ * otherwise the session addresses that control unit before the request.
  * Provenance and validation state of every definition are tracked in SIGNALS.md.
  */
 class SignalDefinition(
@@ -17,8 +22,12 @@ class SignalDefinition(
     val command: String,
     val unit: String,
     val decimals: Int,
+    val target: EcuTarget? = null,
     val decode: (lines: List<String>) -> Decoded,
-)
+) {
+    /** Same signal, requested from [ecu] with physical addressing. */
+    fun on(ecu: EcuTarget) = SignalDefinition(id, label, command, unit, decimals, ecu, decode)
+}
 
 /** Standard OBD-II mode 01 PIDs (SAE J1979) plus the adapter's supply voltage. */
 object BaseSignals {

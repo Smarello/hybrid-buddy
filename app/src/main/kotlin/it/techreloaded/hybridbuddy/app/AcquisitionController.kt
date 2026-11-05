@@ -10,6 +10,9 @@ import it.techreloaded.hybridbuddy.session.RecordingHeader
 import it.techreloaded.hybridbuddy.session.RecordingLine
 import it.techreloaded.hybridbuddy.session.ReplayConnector
 import it.techreloaded.hybridbuddy.session.SessionSource
+import it.techreloaded.hybridbuddy.session.SimulatedCar
+import it.techreloaded.hybridbuddy.signals.BaseSignals
+import it.techreloaded.hybridbuddy.signals.DriveSignals
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -56,6 +59,12 @@ object AcquisitionController {
 
     const val SESSION_PREFIX = "sessione-"
     const val EXPLORATION_PREFIX = "esplorazione-freni-"
+    const val DRIVE_PREFIX = "guida-"
+
+    /** Header note of drive recordings: their replay uses the drive schedule. */
+    private const val DRIVE_NOTE = "guida"
+
+    fun isDrive(session: AcquisitionSession?) = session?.schedule == DriveSignals.schedule
 
     fun latestRecording(context: Context, prefix: String): File? =
         recordingsDir(context).listFiles { file -> file.extension == "jsonl" && file.name.startsWith(prefix) }
@@ -71,16 +80,31 @@ object AcquisitionController {
         note = note,
     )
 
-    fun startLive(context: Context, address: String, adapterName: String) {
+    /** With [drive], reads the Guida signals (brake torques, powers) and records to a `guida-` file. */
+    fun startLive(context: Context, address: String, adapterName: String, drive: Boolean = false) {
         stop()
-        val writer = newRecording(context, SESSION_PREFIX).bufferedWriter()
+        val writer = newRecording(context, if (drive) DRIVE_PREFIX else SESSION_PREFIX).bufferedWriter()
         val session = AcquisitionSession(
             SessionSource.Live(adapterName),
             BluetoothConnector(context.applicationContext, address),
-            recorder = JsonlSessionRecorder(writer, liveHeader()),
+            schedule = if (drive) DriveSignals.schedule else listOf(BaseSignals.all),
+            recorder = JsonlSessionRecorder(writer, liveHeader(note = if (drive) DRIVE_NOTE else null)),
         )
         start(session, usesAdapter = true) { writer.close() }
     }
+
+    /** SIMULATED car for trying the Guida screen without the Yaris; nothing is recorded. */
+    fun startSimulatedDrive() {
+        stop()
+        val session = AcquisitionSession(
+            SessionSource.Replay("Guida simulata", simulated = true),
+            SimulatedCar(replyDelayMs = SIMULATED_REPLY_MS),
+            schedule = DriveSignals.schedule,
+        )
+        start(session, usesAdapter = false) {}
+    }
+
+    private const val SIMULATED_REPLY_MS = 25L
 
     /**
      * Runs under [AcquisitionService], which is stopped when the exploration ends on its own.
@@ -113,7 +137,8 @@ object AcquisitionController {
     fun startReplay(fileName: String, header: RecordingHeader, lines: List<RecordingLine>) {
         stop()
         val simulated = header.source == RecordingHeader.SIMULATED
-        start(AcquisitionSession(SessionSource.Replay(fileName, simulated), ReplayConnector(lines)), usesAdapter = false) {}
+        val schedule = if (header.note == DRIVE_NOTE) DriveSignals.schedule else listOf(BaseSignals.all)
+        start(AcquisitionSession(SessionSource.Replay(fileName, simulated), ReplayConnector(lines), schedule), usesAdapter = false) {}
     }
 
     fun stop() {

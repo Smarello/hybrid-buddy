@@ -91,6 +91,13 @@ dopo `62 DID DID`. Centralina **7D2 → 7DA** (ibrida, mai interrogata finora: l
 | Limite di carica / scarica (dall'uso) | 747 o 7D2 | `221807` | b1-b2 / b3-b4 | (raw−32768)/100 | kW | HA | nessuna | candidato |
 | SOC batteria | 747 o 7D2 | `221F5B` | b1 | raw/2.55 | % | HA | nessuna | candidato |
 
+Potenza termica (dall'uso in HA, `carstate._v123_4`): coppia `2210C2` su **700 → 708**, b1-b2, raw − 32768 Nm (forse coppia
+richiesta, non effettiva), per i giri: P = coppia·2π·giri/60000 kW. **Candidato**, mai provato.
+
+**Letti dalla schermata Guida (0.3.0, D-019/D-020)**: `221067`, `221069` (7D2, ogni giro); `221F9A`, `221807` su 747 e su
+7D2 (ogni 4 giri, preferita 747); `2210C2` su 700 (ogni 4 giri); `010C`, `010D` su 7E0 indirizzata fisicamente (ogni 2 giri).
+Restano tutti **candidati** finché una guida registrata non mostra risposte reali.
+
 Formula di Hybrid Assistant (ramo Yaris): frenata se `M < 0 o R < 0`; attrito se `M − R < 0`; quota d'attrito
 `(M − R)·100/M`; campioni validi sopra 15 km/h (`010D`). Le richieste sono già ammesse da `ReadOnlyCommands`
 (`ATSH 7D2`, `ATCRA 7DA`, `22xxxx`); non sappiamo se la centralina le accetta senza sessione estesa e DID dinamici

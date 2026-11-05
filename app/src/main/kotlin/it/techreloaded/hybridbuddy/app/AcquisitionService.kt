@@ -27,6 +27,7 @@ class AcquisitionService : Service() {
             return START_NOT_STICKY
         }
         val exploring = intent.getBooleanExtra(EXTRA_EXPLORATION, false)
+        val drive = intent.getBooleanExtra(EXTRA_DRIVE, false)
         try {
             startForeground(NOTIFICATION_ID, notification(exploring), ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
         } catch (e: SecurityException) {
@@ -39,7 +40,7 @@ class AcquisitionService : Service() {
                 .apply { acquire() }
         }
         if (exploring) AcquisitionController.startExploration(this, address, intent.getBooleanExtra(EXTRA_REUSE_MAPPING, false))
-        else AcquisitionController.startLive(this, address, intent.getStringExtra(EXTRA_NAME) ?: "OBDLink")
+        else AcquisitionController.startLive(this, address, intent.getStringExtra(EXTRA_NAME) ?: "OBDLink", drive)
         return START_NOT_STICKY
     }
 
@@ -77,10 +78,13 @@ class AcquisitionService : Service() {
         private const val EXTRA_NAME = "name"
         private const val EXTRA_EXPLORATION = "exploration"
         private const val EXTRA_REUSE_MAPPING = "reuse_mapping"
+        private const val EXTRA_DRIVE = "drive"
 
-        fun start(context: Context, address: String, name: String) {
+        /** With [drive], the live session reads the Guida signals. */
+        fun start(context: Context, address: String, name: String, drive: Boolean = false) {
             context.startForegroundService(
-                Intent(context, AcquisitionService::class.java).putExtra(EXTRA_ADDRESS, address).putExtra(EXTRA_NAME, name),
+                Intent(context, AcquisitionService::class.java).putExtra(EXTRA_ADDRESS, address).putExtra(EXTRA_NAME, name)
+                    .putExtra(EXTRA_DRIVE, drive),
             )
         }
 
