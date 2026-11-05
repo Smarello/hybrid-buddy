@@ -8,3 +8,4 @@ docs/*.xapk
 docs/*.apk
 .claude/skills/reverse-engineer-anything
 .DS_Store
+*.bak
