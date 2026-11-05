@@ -60,6 +60,12 @@ data class RecordedEvent(val t: Long, val event: String, val detail: String? = n
 
         /** Brake exploration step reached or ECU found silent; detail = description. */
         const val EXPLORATION = "exploration"
+
+        /** The brake exploration mapping ran to the end: the recording can be reused as mapping. */
+        const val MAPPING_COMPLETED = "mapping_completed"
+
+        /** The brake exploration skipped the mapping and reused another recording's; detail = its file name. */
+        const val MAPPING_REUSED = "mapping_reused"
     }
 }
 
@@ -67,6 +73,10 @@ object Recording {
     private val json = Json { explicitNulls = false; ignoreUnknownKeys = true }
 
     fun encode(line: RecordingLine): String = json.encodeToString(RecordingLine.serializer(), line)
+
+    /** One line, or null when it is not valid (e.g. the last line cut by an abrupt stop). */
+    fun decodeOrNull(line: String): RecordingLine? =
+        runCatching { json.decodeFromString(RecordingLine.serializer(), line) }.getOrNull()
 
     /** @throws IllegalArgumentException when the first line is not a session header. */
     fun parse(lines: Sequence<String>): Pair<RecordingHeader, List<RecordingLine>> {

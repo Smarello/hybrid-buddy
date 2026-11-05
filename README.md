@@ -27,10 +27,13 @@ Sola lettura: l'app può inviare solo richieste di lettura (mode 01/21/22); ogni
    con **Dispositivo**.
 2. Diagnostica → **Esplora freni** → **▶ Inizia**. Lo schermo resta acceso; l'esplorazione continua anche se si spegne.
 3. **Mappa** (5–10 minuti, avanzamento e tempo stimato a schermo): non toccare il pedale.
-4. **Pedale**: segui le istruzioni con il conto alla rovescia (15 s ciascuna): piede lontano → premi leggermente →
-   premi a fondo → rilascia. Tieni il pedale fermo fino al cambio di istruzione.
+4. **Pedale**: finita la mappa l'app **aspetta**: quando sei al posto di guida premi **▶ Inizia il pedale**, poi segui
+   le istruzioni con il conto alla rovescia (15 s ciascuna): piede lontano → premi leggermente → premi a fondo →
+   rilascia. Tieni il pedale fermo fino al cambio di istruzione.
 5. **Fine** → **Esporta esplorazione** → condividi il file `esplorazione-freni-….jsonl` con lo sviluppatore.
    **Interrompi** è sempre possibile: quanto registrato resta esportabile.
+6. Per riprovare: **↻ Ripeti solo il pedale** usa la mappa completata più recente salvata sul telefono (anche quelle
+   della 0.2.0), circa 1 minuto; **Rifai tutto** rifà anche la mappa.
 
 ## Replay
 **Apri registrazione** → "Esempio SIMULATO" (dati inventati, non dell'auto) o "Da file…" per una sessione esportata.

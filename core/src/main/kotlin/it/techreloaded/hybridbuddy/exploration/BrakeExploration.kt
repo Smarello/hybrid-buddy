@@ -9,6 +9,11 @@ import it.techreloaded.hybridbuddy.session.SessionRecorder
 import it.techreloaded.hybridbuddy.session.SessionState
 import it.techreloaded.hybridbuddy.session.Timeouts
 import it.techreloaded.hybridbuddy.session.initializeAdapter
+import it.techreloaded.hybridbuddy.obdlink.AdapterResponse
+import it.techreloaded.hybridbuddy.session.RecordedExchange
+import it.techreloaded.hybridbuddy.session.Recording
+import it.techreloaded.hybridbuddy.session.RecordingHeader
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +34,10 @@ enum class PedalPhase(val label: String, val instruction: String, val pressed: B
     RELEASED_AGAIN("Rilasciato", "Rilascia il pedale", pressed = false),
 }
 
-enum class ExplorationStep { CONNECTING, MAPPING, PEDAL, DONE, STOPPED, FAILED }
+enum class ExplorationStep { CONNECTING, MAPPING, AWAITING_PEDAL, PEDAL, DONE, STOPPED, FAILED }
+
+/** A completed mapping taken from an earlier exploration recording, so the pedal can be repeated without it. */
+data class ReusedMapping(val fileName: String, val mappedAtEpochMs: Long, val identifiers: List<ProbedIdentifier>)
 
 enum class TargetStatus { PENDING, MAPPING, SILENT, DONE }
 
@@ -53,11 +61,14 @@ data class ExplorationState(
     val mappingSent: Int = 0,
     val mappingStartedAtMs: Long? = null,
     val mappingEndedAtMs: Long? = null,
+    /** Current pedal phase; after a stop or failure, the phase that was interrupted. */
     val pedalPhase: PedalPhase? = null,
     val pedalPhaseEndsAtMs: Long? = null,
     /** True when no identifier answered, so there was nothing to read with the pedal. */
     val pedalSkipped: Boolean = false,
     val changedWithPedal: Int? = null,
+    /** Set when the mapping was not run but taken from an earlier recording. */
+    val reusedMapping: ReusedMapping? = null,
     /** Newest last, capped like the acquisition log. */
     val recentExchanges: List<Exchange> = emptyList(),
 )
@@ -74,8 +85,9 @@ object BrakeExplorationPlan {
 
 /**
  * Guided, read-only exploration of the brake signals with the car stationary in READY:
- * 1. map which mode 21/22 requests each target control unit answers;
- * 2. read only those in a loop while the owner follows four timed pedal phases (each phase start is recorded);
+ * 1. map which mode 21/22 requests each target control unit answers (or reuse [reusedMapping]);
+ * 2. wait for the owner's [confirmPedal], then read only those identifiers in a loop while the owner
+ *    follows four timed pedal phases (each phase start is recorded);
  * 3. count the identifiers whose answer changes with the pedal pressed.
  * Every exchange is recorded; the exported file is the evidence analysed offline.
  */
@@ -85,6 +97,7 @@ class BrakeExploration(
     private val targets: List<ExplorationTarget> = BrakeExplorationPlan.targets,
     private val requests: List<String> = BrakeExplorationPlan.requests,
     private val pedalPhaseMs: Long = BrakeExplorationPlan.PEDAL_PHASE_MS,
+    private val reusedMapping: ReusedMapping? = null,
     private val timeouts: Timeouts = Timeouts(),
     private val io: CoroutineDispatcher = Dispatchers.IO,
     private val clock: () -> Long = System::currentTimeMillis,
@@ -97,14 +110,14 @@ class BrakeExploration(
     private val responding = mutableListOf<ProbedIdentifier>()
     private val pedalAnswers = mutableMapOf<ProbedIdentifier, MutableMap<PedalPhase, MutableList<List<Int>>>>()
     private var consecutiveTimeouts = 0
+    private val pedalConfirmed = CompletableDeferred<Unit>()
+
+    /** The owner is ready: the pedal phases may start. No phase ever starts without it. */
+    fun confirmPedal() {
+        pedalConfirmed.complete(Unit)
+    }
 
     private class ConnectionLost(reason: String) : Exception(reason)
-
-    private sealed interface Answer {
-        data class Positive(val payload: List<Int>) : Answer
-        data object Negative : Answer
-        data object Silent : Answer
-    }
 
     /** Runs to the end, or until cancelled (state STOPPED). Never reconnects: a lost link ends it as FAILED. */
     suspend fun run() {
@@ -122,7 +135,7 @@ class BrakeExploration(
                 try {
                     val (identity, protocol) = initializeAdapter(timeouts) { command, timeout -> execute(connection, command, timeout) }
                     mutableState.update { it.copy(adapterIdentity = identity, protocol = protocol) }
-                    map(connection)
+                    if (reusedMapping == null) map(connection) else reuse(reusedMapping)
                     pedal(connection)
                     // Back to the standard setup (functional addressing, automatic flow control).
                     execute(connection, "ATZ", timeouts.resetMs)
@@ -131,12 +144,12 @@ class BrakeExploration(
                     mutableState.update { it.copy(step = ExplorationStep.DONE, pedalPhase = null, changedWithPedal = changed) }
                 } catch (e: ConnectionLost) {
                     recorder?.event(clock(), RecordedEvent.DISCONNECTED, e.message)
-                    mutableState.update { it.copy(step = ExplorationStep.FAILED, failure = e.message, pedalPhase = null) }
+                    mutableState.update { it.copy(step = ExplorationStep.FAILED, failure = e.message) }
                 }
             }
         } finally {
             if (state.value.step !in setOf(ExplorationStep.DONE, ExplorationStep.FAILED)) {
-                mutableState.update { it.copy(step = ExplorationStep.STOPPED, pedalPhase = null) }
+                mutableState.update { it.copy(step = ExplorationStep.STOPPED) }
             }
         }
     }
@@ -167,7 +180,27 @@ class BrakeExploration(
             }
             updateTarget(index) { if (it.status == TargetStatus.MAPPING) it.copy(status = TargetStatus.DONE) else it }
         }
+        recorder?.event(clock(), RecordedEvent.MAPPING_COMPLETED)
         mutableState.update { it.copy(mappingEndedAtMs = clock()) }
+    }
+
+    private fun reuse(mapping: ReusedMapping) {
+        recorder?.event(clock(), RecordedEvent.MAPPING_REUSED, mapping.fileName)
+        responding += mapping.identifiers
+        mutableState.update { state ->
+            state.copy(
+                reusedMapping = mapping,
+                mappingTotal = 0,
+                targets = state.targets.map { progress ->
+                    val requests = mapping.identifiers.filter { it.target == progress.target }.map { it.request }
+                    progress.copy(
+                        status = TargetStatus.DONE,
+                        mode21Responding = requests.count { it.startsWith("21") },
+                        mode22Responding = requests.count { it.startsWith("22") },
+                    )
+                },
+            )
+        }
     }
 
     private suspend fun pedal(connection: ElmConnection) {
@@ -175,6 +208,8 @@ class BrakeExploration(
             mutableState.update { it.copy(pedalSkipped = true) }
             return
         }
+        mutableState.update { it.copy(step = ExplorationStep.AWAITING_PEDAL) }
+        pedalConfirmed.await()
         val byTarget = responding.groupBy { it.target }
         for (phase in PedalPhase.entries) {
             val endsAt = clock() + pedalPhaseMs
@@ -206,20 +241,7 @@ class BrakeExploration(
 
     private suspend fun ask(connection: ElmConnection, target: ExplorationTarget, request: String): Answer {
         val exchange = execute(connection, request, timeouts.obdRequestMs)
-        if (exchange.error != null) return Answer.Silent
-        val last = IsoTp.messages(exchange.lines)
-            .filter { it.ecu == target.responseHeader }
-            // 7F xx 78 = "response pending": the real answer follows.
-            .lastOrNull { !(it.payload.size >= 3 && it.payload[0] == 0x7F && it.payload[2] == 0x78) }
-            ?: return Answer.Silent
-        val service = request.substring(0, 2).toInt(16)
-        val identifier = request.substring(2).chunked(2).map { it.toInt(16) }
-        return when {
-            last.payload.firstOrNull() == service + 0x40 && last.payload.drop(1).take(identifier.size) == identifier ->
-                Answer.Positive(last.payload)
-            last.payload.firstOrNull() == 0x7F -> Answer.Negative
-            else -> Answer.Silent
-        }
+        return Answer.of(exchange.lines, exchange.error, target, request)
     }
 
     private suspend fun execute(connection: ElmConnection, command: String, timeoutMs: Long): Exchange {
@@ -238,6 +260,67 @@ class BrakeExploration(
 
     private fun updateTarget(index: Int, change: (TargetProgress) -> TargetProgress) =
         mutableState.update { state -> state.copy(targets = state.targets.toMutableList().also { it[index] = change(it[index]) }) }
+}
+
+/** How a control unit answered one read request. */
+internal sealed interface Answer {
+    data class Positive(val payload: List<Int>) : Answer
+    data object Negative : Answer
+    data object Silent : Answer
+
+    companion object {
+        fun of(lines: List<String>, error: String?, target: ExplorationTarget, request: String): Answer {
+            if (error != null) return Silent
+            val last = IsoTp.messages(lines)
+                .filter { it.ecu == target.responseHeader }
+                // 7F xx 78 = "response pending": the real answer follows.
+                .lastOrNull { !(it.payload.size >= 3 && it.payload[0] == 0x7F && it.payload[2] == 0x78) }
+                ?: return Silent
+            val service = request.substring(0, 2).toInt(16)
+            val identifier = request.substring(2).chunked(2).map { it.toInt(16) }
+            return when {
+                last.payload.firstOrNull() == service + 0x40 && last.payload.drop(1).take(identifier.size) == identifier ->
+                    Positive(last.payload)
+                last.payload.firstOrNull() == 0x7F -> Negative
+                else -> Silent
+            }
+        }
+    }
+}
+
+/** Reads the mapping back from an exploration recording, so the pedal can be repeated without mapping again. */
+object MappingRecording {
+    /**
+     * The identifiers that answered positively during the mapping of [lines] (a JSONL exploration recording),
+     * or null when the mapping did not complete, was itself reused, or found nothing to read.
+     * Complete = `mapping_completed` event, or (recordings from 0.2.0) the start of a pedal phase.
+     * Invalid lines (e.g. cut by an abrupt stop) are skipped.
+     */
+    fun read(
+        fileName: String,
+        lines: Sequence<String>,
+        targets: List<ExplorationTarget> = BrakeExplorationPlan.targets,
+    ): ReusedMapping? {
+        val parsed = lines.filter { it.isNotBlank() }.mapNotNull(Recording::decodeOrNull).iterator()
+        val header = (if (parsed.hasNext()) parsed.next() else null) as? RecordingHeader ?: return null
+        var target: ExplorationTarget? = null
+        val identifiers = linkedSetOf<ProbedIdentifier>()
+        for (line in parsed) {
+            if (line is RecordedEvent) when (line.event) {
+                RecordedEvent.MAPPING_REUSED -> return null
+                RecordedEvent.MAPPING_COMPLETED, RecordedEvent.PEDAL_PHASE ->
+                    return identifiers.takeIf { it.isNotEmpty() }?.let { ReusedMapping(fileName, header.startedAtEpochMs, it.toList()) }
+            }
+            if (line !is RecordedExchange) continue
+            if (line.cmd.startsWith("ATSH ")) target = targets.firstOrNull { it.requestHeader == line.cmd.removePrefix("ATSH ") }
+            val current = target ?: continue
+            if (!(line.cmd.startsWith("21") || line.cmd.startsWith("22"))) continue
+            if (Answer.of(AdapterResponse.lines(line.raw, line.cmd), line.error, current, line.cmd) is Answer.Positive) {
+                identifiers += ProbedIdentifier(current, line.cmd)
+            }
+        }
+        return null
+    }
 }
 
 object PedalAnalysis {

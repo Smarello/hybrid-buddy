@@ -38,7 +38,7 @@ class AcquisitionService : Service() {
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "hybridbuddy:acquisition")
                 .apply { acquire() }
         }
-        if (exploring) AcquisitionController.startExploration(this, address)
+        if (exploring) AcquisitionController.startExploration(this, address, intent.getBooleanExtra(EXTRA_REUSE_MAPPING, false))
         else AcquisitionController.startLive(this, address, intent.getStringExtra(EXTRA_NAME) ?: "OBDLink")
         return START_NOT_STICKY
     }
@@ -62,7 +62,7 @@ class AcquisitionService : Service() {
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
             .setContentTitle(if (exploring) "Hybrid Buddy · esplorazione freni" else "Hybrid Buddy · acquisizione attiva")
-            .setContentText(if (exploring) "Mappa delle centraline in corso, sola lettura" else "Lettura dall'OBDLink LX in corso")
+            .setContentText(if (exploring) "Esplorazione in corso, sola lettura" else "Lettura dall'OBDLink LX in corso")
             .setContentIntent(open)
             .setOngoing(true)
             .addAction(Notification.Action.Builder(null, "Termina", stop).build())
@@ -76,6 +76,7 @@ class AcquisitionService : Service() {
         private const val EXTRA_ADDRESS = "address"
         private const val EXTRA_NAME = "name"
         private const val EXTRA_EXPLORATION = "exploration"
+        private const val EXTRA_REUSE_MAPPING = "reuse_mapping"
 
         fun start(context: Context, address: String, name: String) {
             context.startForegroundService(
@@ -83,9 +84,10 @@ class AcquisitionService : Service() {
             )
         }
 
-        fun startExploration(context: Context, address: String) {
+        fun startExploration(context: Context, address: String, reuseMapping: Boolean) {
             context.startForegroundService(
-                Intent(context, AcquisitionService::class.java).putExtra(EXTRA_ADDRESS, address).putExtra(EXTRA_EXPLORATION, true),
+                Intent(context, AcquisitionService::class.java).putExtra(EXTRA_ADDRESS, address)
+                    .putExtra(EXTRA_EXPLORATION, true).putExtra(EXTRA_REUSE_MAPPING, reuseMapping),
             )
         }
 

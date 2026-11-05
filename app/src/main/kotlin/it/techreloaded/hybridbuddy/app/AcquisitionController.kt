@@ -2,6 +2,8 @@ package it.techreloaded.hybridbuddy.app
 
 import android.content.Context
 import it.techreloaded.hybridbuddy.exploration.BrakeExploration
+import it.techreloaded.hybridbuddy.exploration.MappingRecording
+import it.techreloaded.hybridbuddy.exploration.ReusedMapping
 import it.techreloaded.hybridbuddy.session.AcquisitionSession
 import it.techreloaded.hybridbuddy.session.JsonlSessionRecorder
 import it.techreloaded.hybridbuddy.session.RecordingHeader
@@ -15,6 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -34,6 +37,20 @@ object AcquisitionController {
 
     private val mutableExploration = MutableStateFlow<BrakeExploration?>(null)
     val exploration: StateFlow<BrakeExploration?> = mutableExploration
+
+    private val mutableLatestMapping = MutableStateFlow<ReusedMapping?>(null)
+
+    /** Most recent completed mapping saved on the phone, refreshed by [refreshLatestMapping]. */
+    val latestMapping: StateFlow<ReusedMapping?> = mutableLatestMapping
+
+    /** Scans the exploration recordings, newest first, for the most recent completed mapping. */
+    suspend fun refreshLatestMapping(context: Context) {
+        mutableLatestMapping.value = withContext(Dispatchers.IO) {
+            recordingsDir(context).listFiles { file -> file.extension == "jsonl" && file.name.startsWith(EXPLORATION_PREFIX) }
+                .orEmpty().sortedByDescending { it.name }.asSequence()
+                .firstNotNullOfOrNull { file -> file.bufferedReader().useLines { MappingRecording.read(file.name, it) } }
+        }
+    }
 
     fun recordingsDir(context: Context) = File(context.filesDir, "recordings").apply { mkdirs() }
 
@@ -65,13 +82,18 @@ object AcquisitionController {
         start(session, usesAdapter = true) { writer.close() }
     }
 
-    /** Runs under [AcquisitionService], which is stopped when the exploration ends on its own. */
-    fun startExploration(context: Context, address: String) {
+    /**
+     * Runs under [AcquisitionService], which is stopped when the exploration ends on its own.
+     * With [reuseMapping] the mapping is skipped and [latestMapping] is used instead.
+     */
+    fun startExploration(context: Context, address: String, reuseMapping: Boolean) {
+        val mapping = if (reuseMapping) latestMapping.value ?: return AcquisitionService.stop(context) else null
         stop()
         val writer = newRecording(context, EXPLORATION_PREFIX).bufferedWriter()
         val exploration = BrakeExploration(
             BluetoothConnector(context.applicationContext, address),
             recorder = JsonlSessionRecorder(writer, liveHeader(note = "esplorazione freni")),
+            reusedMapping = mapping,
         )
         mutableExploration.value = exploration
         val appContext = context.applicationContext

@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,11 +48,16 @@ import androidx.compose.ui.unit.sp
 import it.techreloaded.hybridbuddy.exploration.ExplorationState
 import it.techreloaded.hybridbuddy.exploration.ExplorationStep
 import it.techreloaded.hybridbuddy.exploration.PedalPhase
+import it.techreloaded.hybridbuddy.exploration.ReusedMapping
 import it.techreloaded.hybridbuddy.exploration.TargetProgress
 import it.techreloaded.hybridbuddy.exploration.TargetStatus
 import kotlinx.coroutines.delay
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 private const val VISIBLE_EXCHANGES = 5
+private val clock = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
 
 private enum class StepStatus { PENDING, ACTIVE, DONE, INTERRUPTED }
 
@@ -62,7 +68,13 @@ internal fun BrakeExplorationScreen(onBack: () -> Unit) {
     val preferences = remember { context.getSharedPreferences("adapter", Context.MODE_PRIVATE) }
     val exploration by AcquisitionController.exploration.collectAsState()
     val state = exploration?.state?.collectAsState()?.value
-    val running = state != null && state.step in setOf(ExplorationStep.CONNECTING, ExplorationStep.MAPPING, ExplorationStep.PEDAL)
+    val running = state != null && state.step in setOf(
+        ExplorationStep.CONNECTING, ExplorationStep.MAPPING, ExplorationStep.AWAITING_PEDAL, ExplorationStep.PEDAL,
+    )
+    val latestMapping by AcquisitionController.latestMapping.collectAsState()
+    LaunchedEffect(running) {
+        if (!running) AcquisitionController.refreshLatestMapping(context)
+    }
 
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
@@ -78,19 +90,21 @@ internal fun BrakeExplorationScreen(onBack: () -> Unit) {
         onDispose { view.keepScreenOn = false }
     }
 
+    var reuseMapping by remember { mutableStateOf(false) }
     fun start() {
         val address = preferences.getString("address", null)
         if (address == null) {
             Toast.makeText(context, "Scegli prima l'LX con «Dispositivo» nella diagnostica", Toast.LENGTH_LONG).show()
         } else {
-            AcquisitionService.startExploration(context, address)
+            AcquisitionService.startExploration(context, address, reuseMapping)
         }
     }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
         if (granted[Manifest.permission.BLUETOOTH_CONNECT] == true) start()
         else Toast.makeText(context, "Serve il permesso Bluetooth per collegarsi all'LX", Toast.LENGTH_LONG).show()
     }
-    fun startWithPermission() {
+    fun startWithPermission(reuse: Boolean) {
+        reuseMapping = reuse
         if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) start()
         else permission.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.POST_NOTIFICATIONS))
     }
@@ -114,11 +128,11 @@ internal fun BrakeExplorationScreen(onBack: () -> Unit) {
         }
 
         Column(Modifier.fillMaxWidth().background(CardBackground, RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 4.dp)) {
-            PrepareStep(state, onStart = ::startWithPermission)
+            PrepareStep(state) { StartChoices(latestMapping, firstTime = true, onStart = ::startWithPermission) }
             HorizontalDivider(color = Color(0xFF23272D))
             MappingStep(state, now)
             HorizontalDivider(color = Color(0xFF23272D))
-            PedalStep(state, now)
+            PedalStep(state, now, onConfirm = { exploration?.confirmPedal() })
             HorizontalDivider(color = Color(0xFF23272D))
             EndStep(state)
         }
@@ -133,7 +147,7 @@ internal fun BrakeExplorationScreen(onBack: () -> Unit) {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5A2626), contentColor = Color(0xFFFFD6D6)),
                 ) { Text("■ Interrompi") }
             } else if (state != null) {
-                OutlinedButton(onClick = ::startWithPermission) { Text("Ripeti esplorazione") }
+                StartChoices(latestMapping, firstTime = false, onStart = ::startWithPermission)
             }
             OutlinedButton(
                 onClick = { exportLatest(context, AcquisitionController.EXPLORATION_PREFIX) },
@@ -144,10 +158,26 @@ internal fun BrakeExplorationScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun PrepareStep(state: ExplorationState?, onStart: () -> Unit) {
+private fun PrepareStep(state: ExplorationState?, startChoices: @Composable () -> Unit) {
     StepRow(1, if (state == null) StepStatus.ACTIVE else StepStatus.DONE, "Prepara l'auto") {
         Detail("READY, leva in P, freno di stazionamento, piede lontano dal pedale. Durata: 5–10 minuti di mappa, poi 1 minuto col pedale.")
-        if (state == null) Button(onClick = onStart, modifier = Modifier.padding(top = 6.dp)) { Text("▶ Inizia") }
+        if (state == null) startChoices()
+    }
+}
+
+/** With a completed mapping on the phone the main action repeats only the pedal; the full run stays available. */
+@Composable
+private fun StartChoices(mapping: ReusedMapping?, firstTime: Boolean, onStart: (reuseMapping: Boolean) -> Unit) {
+    Column(Modifier.padding(top = 6.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (mapping != null) {
+            Button(onClick = { onStart(true) }) { Text("↻ Ripeti solo il pedale") }
+            Detail("Usa la mappa delle ${clock.format(Instant.ofEpochMilli(mapping.mappedAtEpochMs))} (${mapping.identifiers.size} identificativi), circa 1 minuto")
+            OutlinedButton(onClick = { onStart(false) }) { Text("Rifai tutto (mappa compresa, 5–10 min)") }
+        } else if (firstTime) {
+            Button(onClick = { onStart(false) }) { Text("▶ Inizia") }
+        } else {
+            OutlinedButton(onClick = { onStart(false) }) { Text("Rifai tutto (mappa compresa, 5–10 min)") }
+        }
     }
 }
 
@@ -157,14 +187,23 @@ private fun MappingStep(state: ExplorationState?, now: Long) {
     val ended = state?.mappingEndedAtMs
     val status = when {
         state == null -> StepStatus.PENDING
-        ended != null -> StepStatus.DONE
+        ended != null || state.reusedMapping != null -> StepStatus.DONE
         state.step == ExplorationStep.CONNECTING || state.step == ExplorationStep.MAPPING -> StepStatus.ACTIVE
         else -> StepStatus.INTERRUPTED
     }
-    val title = "Mappa delle centraline" + if (started != null && ended != null) " · ${formatDuration(ended - started)}" else ""
-    StepRow(2, status, title) {
+    val reused = state?.reusedMapping
+    val title = when {
+        reused != null -> "Mappa delle centraline · riutilizzata"
+        started != null && ended != null -> "Mappa delle centraline · ${formatDuration(ended - started)}"
+        else -> "Mappa delle centraline"
+    }
+    StepRow(2, if (reused != null) StepStatus.DONE else status, title) {
         when {
             state == null -> Detail("7E2 ibrida e 7B0 freni: mode 21 completo e mode 22 1000–1FFF, sola lettura.")
+            reused != null -> {
+                Detail("Mappa delle ${clock.format(Instant.ofEpochMilli(reused.mappedAtEpochMs))} (${reused.fileName})")
+                state.targets.forEach { Detail(targetLine(it)) }
+            }
             state.step == ExplorationStep.CONNECTING -> Detail("Collegamento all'LX…")
             else -> {
                 state.targets.forEach { Detail(targetLine(it)) }
@@ -183,23 +222,33 @@ private fun MappingStep(state: ExplorationState?, now: Long) {
 }
 
 @Composable
-private fun PedalStep(state: ExplorationState?, now: Long) {
+private fun PedalStep(state: ExplorationState?, now: Long, onConfirm: () -> Unit) {
     val phase = state?.pedalPhase
+    val mapped = state != null && (state.mappingEndedAtMs != null || state.reusedMapping != null)
     val status = when {
         state == null -> StepStatus.PENDING
-        state.step == ExplorationStep.PEDAL -> StepStatus.ACTIVE
+        state.step == ExplorationStep.PEDAL || state.step == ExplorationStep.AWAITING_PEDAL -> StepStatus.ACTIVE
         state.step == ExplorationStep.DONE -> StepStatus.DONE
-        state.mappingEndedAtMs != null -> StepStatus.INTERRUPTED // stopped or failed during the pedal phases
+        mapped -> StepStatus.INTERRUPTED // stopped or failed before or during the pedal phases
         else -> StepStatus.PENDING
     }
     val title = when {
         state?.pedalSkipped == true -> "Pedale del freno · saltato"
+        state?.step == ExplorationStep.AWAITING_PEDAL -> "Pedale del freno · in attesa di te"
         status == StepStatus.ACTIVE -> "Pedale del freno · in corso"
         else -> "Pedale del freno"
     }
     StepRow(3, status, title) {
         when {
             state?.pedalSkipped == true -> Detail("Nessun identificativo risponde: non c'è niente da leggere col pedale.")
+            state?.step == ExplorationStep.AWAITING_PEDAL ->
+                Column(Modifier.fillMaxWidth().background(Amber.copy(alpha = 0.08f), RoundedCornerShape(10.dp)).padding(10.dp)) {
+                    Text("Pronto per il pedale?", color = Amber, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Detail("4 fasi da 15 s con il conto alla rovescia. Siediti al posto di guida con il piede lontano dal pedale, poi premi:")
+                    Button(onClick = onConfirm, modifier = Modifier.padding(top = 8.dp)) { Text("▶ Inizia il pedale") }
+                }
+            status == StepStatus.INTERRUPTED ->
+                Detail(if (phase == null) "Interrotto prima di iniziare" else "Interrotto durante «${phase.label}»")
             status == StepStatus.ACTIVE && phase != null -> {
                 val secondsLeft = ((state.pedalPhaseEndsAtMs ?: now) - now).coerceAtLeast(0) / 1000 + 1
                 Column(Modifier.fillMaxWidth().background(Amber.copy(alpha = 0.08f), RoundedCornerShape(10.dp)).padding(10.dp)) {
