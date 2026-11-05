@@ -48,10 +48,10 @@ class DriveTest {
         // M = (0x7C40 − 32768)/8 = −120 Nm, in a multi-frame answer (3 + 6 data bytes).
         assertEquals(Decoded.Value(-120.0, "7DA"), decode(DriveSignals.brakeRequestTorque, listOf(0x62, 0x10, 0x67, 0x7C, 0x40, 0, 0, 0, 0)))
         assertEquals(Decoded.Value(-70.0, "7DA"), decode(DriveSignals.regenBrakeTorque, listOf(0x62, 0x10, 0x69, 0, 0, 0x7D, 0xD0)))
-        // 200 V (12800) · −50 A (32268) = −10 kW, charging.
+        // 200 V (12800) · −50 A (0xFE0C, two's complement) = −10 kW, charging.
         assertEquals(
             Decoded.Value(-10.0, "74F"),
-            decode(DriveSignals.batteryPower, listOf(0x62, 0x1F, 0x9A, 0, 0, 0x32, 0x00, 0x7E, 0x0C)),
+            decode(DriveSignals.batteryPower, listOf(0x62, 0x1F, 0x9A, 0, 0, 0x32, 0x00, 0xFE, 0x0C)),
         )
         assertEquals(Decoded.Value(25.0, "74F"), decode(DriveSignals.chargeLimit, listOf(0x62, 0x18, 0x07, 0x89, 0xC4)))
         assertEquals(Decoded.Value(60.0, "708"), decode(DriveSignals.engineTorque, listOf(0x62, 0x10, 0xC2, 0x80, 0x3C)))
@@ -79,7 +79,47 @@ class DriveTest {
 
         assertEquals(BrakeIndicator.Idle(BrakeIndicator.BELOW_BRAKE_SPEED), brakeIndicator(state(m to -80.0, r to -10.0, speed to 10.0), now))
         assertEquals(BrakeIndicator.Idle(BrakeIndicator.BELOW_BRAKE_SPEED), brakeIndicator(state(m to -80.0, r to -10.0, speed to 15.0), now))
-        assertEquals(BrakeIndicator.Idle(BrakeIndicator.NOT_BRAKING), brakeIndicator(state(m to 0.0, r to 0.0), now))
+        // Stationary with the pedal released: nothing else is needed to say "no braking".
+        assertEquals(BrakeIndicator.Idle(BrakeIndicator.NOT_BRAKING), brakeIndicator(state(m to 0.0, r to 0.0, speed to 0.0), now))
+    }
+
+    @Test
+    fun `regeneration on accelerator release comes from the battery power while coasting, as the HyBall does`() {
+        val m = DriveSignals.brakeRequestTorque
+        val r = DriveSignals.regenBrakeTorque
+        val speed = DriveSignals.vehicleSpeed
+        val pedal = DriveSignals.acceleratorPedal
+        val rpm = DriveSignals.engineSpeed
+        val torque = DriveSignals.engineTorque
+        val battery = DriveSignals.batteryPower
+        val coasting = arrayOf(m to 0.0, r to 0.0, speed to 60.0, pedal to 0.0, rpm to 0.0)
+
+        assertEquals(BrakeIndicator.Regenerative(16, liftOff = true), brakeIndicator(state(*coasting, battery to -4.0, DriveSignals.chargeLimit to 25.0), now))
+        assertEquals(0.08, BrakeIndicator.Regenerative(16, liftOff = true).fill)
+        // Engine spinning without torque counts as off (fuel cut); a running engine charging the battery is not regeneration.
+        assertEquals(
+            BrakeIndicator.Regenerative(null, liftOff = true),
+            brakeIndicator(state(m to 0.0, r to 0.0, speed to 60.0, pedal to 0.0, rpm to 1200.0, torque to -20.0, battery to -4.0), now),
+        )
+        assertEquals(
+            BrakeIndicator.Idle(BrakeIndicator.NOT_BRAKING),
+            brakeIndicator(state(m to 0.0, r to 0.0, speed to 60.0, pedal to 0.0, rpm to 1500.0, torque to 30.0, battery to -4.0), now),
+        )
+        assertEquals(BrakeIndicator.Idle(BrakeIndicator.NOT_BRAKING), brakeIndicator(state(m to 0.0, r to 0.0, speed to 60.0, pedal to 15.0, rpm to 0.0, battery to -4.0), now))
+        assertEquals(BrakeIndicator.Idle(BrakeIndicator.NOT_BRAKING), brakeIndicator(state(*coasting, battery to 0.5), now))
+
+        // Every signal the coasting state needs is named when missing; the first missing one wins.
+        assertEquals(BrakeIndicator.Unavailable("rilascio: velocità: 7DF: in attesa"), brakeIndicator(state(m to 0.0, r to 0.0), now))
+        assertEquals(
+            BrakeIndicator.Unavailable("rilascio: acceleratore: 7D2: rifiuta 221060 (7F 22 31)"),
+            brakeIndicator(state(m to 0.0, r to 0.0, speed to 60.0, failures = mapOf(pedal to "rifiuta 221060 (7F 22 31)")), now),
+        )
+        assertEquals(BrakeIndicator.Unavailable("rilascio: giri: 7DF: in attesa"), brakeIndicator(state(m to 0.0, r to 0.0, speed to 60.0, pedal to 0.0), now))
+        assertEquals(
+            BrakeIndicator.Unavailable("rilascio: coppia termica: 700: in attesa"),
+            brakeIndicator(state(m to 0.0, r to 0.0, speed to 60.0, pedal to 0.0, rpm to 1500.0), now),
+        )
+        assertEquals(BrakeIndicator.Unavailable("rilascio: 747: in attesa · 7D2: in attesa"), brakeIndicator(state(*coasting), now))
     }
 
     @Test
@@ -93,7 +133,7 @@ class DriveTest {
         assertEquals(BrakeIndicator.Unavailable("7D2: in attesa"), brakeIndicator(state(m to -10.0), now))
         assertEquals(BrakeIndicator.Unavailable("7D2: dato scaduto"), brakeIndicator(state(m to -10.0, r to -10.0), now + 5_000))
         assertEquals(
-            BrakeIndicator.Unavailable("velocità: 7E0: in attesa"),
+            BrakeIndicator.Unavailable("velocità: 7DF: in attesa"),
             brakeIndicator(state(m to -100.0, r to -10.0), now),
         )
     }
@@ -108,7 +148,7 @@ class DriveTest {
         assertEquals(Fresh.Missing("747: in attesa · 7D2: in attesa"), batteryPowerKw(state(), now))
         val engine = enginePowerKw(state(DriveSignals.engineTorque to 100.0, DriveSignals.engineSpeed to 3000.0), now) as Fresh.Value
         assertEquals(100 * 2 * PI * 3000 / 60_000, engine.value, 1e-9)
-        assertEquals(Fresh.Missing("giri: 7E0: in attesa"), enginePowerKw(state(DriveSignals.engineTorque to 100.0), now))
+        assertEquals(Fresh.Missing("giri: 7DF: in attesa"), enginePowerKw(state(DriveSignals.engineTorque to 100.0), now))
     }
 
     private fun simulatedDrive(car: SimulatedCar, recorder: JsonlSessionRecorder? = null) =
@@ -150,7 +190,7 @@ class DriveTest {
         val now = System.currentTimeMillis()
         assertTrue(batteryPowerKw(state, now) is Fresh.Value)
         assertEquals("non risponde (NO DATA)", state.readings.getValue(DriveSignals.batteryPower.id).failure)
-        // 40 rounds give 747 ten turns: without the backoff 10 asks, with it (1, 2, 4 skipped turns) 3.
+        // 40 rounds give 747 twenty turns: without the backoff 20 asks, with it (1, 2, 4, 8, 16 skipped turns) 5.
         assertTrue(sent.count { it == "ATSH 747" } <= 5, "747 interrogata ${sent.count { it == "ATSH 747" }} volte")
         assertEquals(LinkLevel.ERROR, driveEcuStatus(state, now).single { it.label == "747" }.level)
     }
@@ -165,10 +205,20 @@ class DriveTest {
     }
 
     @Test
+    fun `the simulated car coasts with the accelerator released and the ring shows the lift-off regeneration`() {
+        var clock = 0L
+        val car = SimulatedCar(clock = { clock })
+        clock = 27_000 // accelerator released at 66 km/h, engine off, battery charging at −4 kW
+        val session = simulatedDrive(car)
+        val state = runUntil(session) { it.readings.size == session.signals.size }
+        assertEquals(BrakeIndicator.Regenerative(16, liftOff = true), brakeIndicator(state, System.currentTimeMillis()))
+    }
+
+    @Test
     fun `a recorded drive replays through the same schedule`() {
         var clock = 0L
         val car = SimulatedCar(clock = { clock })
-        clock = 28_000 // regenerative braking
+        clock = 31_000 // regenerative braking
         val writer = StringWriter()
         val header = RecordingHeader(startedAtEpochMs = 0, source = RecordingHeader.SIMULATED, appVersion = "test", note = "guida")
         val session = simulatedDrive(car, JsonlSessionRecorder(writer, header))

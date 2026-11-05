@@ -8,8 +8,12 @@ import it.techreloaded.hybridbuddy.obdlink.IsoTp
  * Data bytes are counted from the first byte after `62 DID DID` (b1 = index 0).
  */
 object DriveSignals {
-    /** Engine ECU for OBD-II mode 01 (speed, rpm), addressed physically. */
-    val obdEngineEcu = EcuTarget("7E0", "7E8")
+    /**
+     * OBD-II mode 01 (speed, rpm): functional request 7DF with the answers filtered to the engine ECU 7E8. On the Yaris
+     * 2026 the physical address 7E0 got NO DATA to all 44 mode 01 requests of the first drive (2026-11-05), while 7DF
+     * was answered by 7E8 minutes before (D-023).
+     */
+    val obdEngineEcu = EcuTarget("7DF", "7E8")
     val hybridEcu = EcuTarget("7D2", "7DA")
     val batteryEcu = EcuTarget("747", "74F")
 
@@ -25,6 +29,9 @@ object DriveSignals {
     val regenBrakeTorque = mode22("regen_brake_torque", "Coppia rigenerativa", hybridEcu, "1069", "Nm", 0, 4) { b ->
         signed16(b, 2) / 8.0
     }
+
+    /** `1060` b1 / 2 in Hybrid Assistant: accelerator pedal, "pressed" when > 0 (meaning inferred from its use, SIGNALS.md). */
+    val acceleratorPedal = mode22("accelerator_pedal", "Pedale acceleratore", hybridEcu, "1060", "%", 0, 1) { b -> b[0] / 2.0 }
 
     val batteryPower = batteryPower(batteryEcu)
     val batteryPowerFromHybridEcu = batteryPower(hybridEcu)
@@ -42,23 +49,33 @@ object DriveSignals {
     /** Speed above which friction counts while braking (`m_brakespeed` of Hybrid Assistant for the Yaris MY20). */
     const val BRAKE_MIN_SPEED_KMH = 15.0
 
+    /** "Moving" state of Hybrid Assistant (`carstate`, `_v130_5`). */
+    const val MOVING_MIN_SPEED_KMH = 2.0
+
+    /** Below this engine speed the car is in EV for Hybrid Assistant (`carstate`, `_v130_4`). */
+    const val EV_MAX_RPM = 800.0
+
     /**
-     * Polling rounds, cycled: the brake torques in every round (target ≥ 5 reads/s), speed and rpm every other
-     * round, battery and engine torque every fourth. Each round switches control unit at most twice.
-     * The battery is read on both 747 and 7D2: the interpretation prefers 747 (Li-ion branch of Hybrid Assistant).
+     * Polling rounds, cycled: the brake torques and the accelerator in every round, everything else every other round, so that no signal
+     * expires between two reads (STALE_AFTER_MS = 2 s). First drive (2026-11-05): a round took 0.33 s median, 0.6 s p90,
+     * so with four rounds the engine torque was read every 1.2–2.2 s and kept expiring (D-025). Five control unit
+     * switches per cycle. The battery is read on both 747 and 7D2: the interpretation prefers 747 (Li-ion branch of
+     * Hybrid Assistant).
      */
     val schedule: List<List<SignalDefinition>> = listOf(
-        listOf(brakeRequestTorque, regenBrakeTorque, vehicleSpeed, engineSpeed),
-        listOf(brakeRequestTorque, regenBrakeTorque, batteryPower, chargeLimit),
-        listOf(brakeRequestTorque, regenBrakeTorque, vehicleSpeed, engineSpeed),
-        listOf(brakeRequestTorque, regenBrakeTorque, batteryPowerFromHybridEcu, chargeLimitFromHybridEcu, engineTorque),
+        listOf(brakeRequestTorque, regenBrakeTorque, acceleratorPedal, vehicleSpeed, engineSpeed, batteryPower, chargeLimit),
+        listOf(brakeRequestTorque, regenBrakeTorque, acceleratorPedal, batteryPowerFromHybridEcu, chargeLimitFromHybridEcu, engineTorque),
     )
 
-    /** DID 1F9A: voltage b3-b4 /64 V, current b5-b6 (raw − 32768)/10 A (direct-read form in Hybrid Assistant); P = V·I/1000. */
+    /**
+     * DID 1F9A: voltage b3-b4 /64 V, current b5-b6 two's complement /10 A, negative while charging; P = V·I/1000.
+     * First drive (2026-11-05): +3 A at rest, −159…+156 A on the road; the (raw − 32768) form of Hybrid Assistant's
+     * direct read would give ±3270 A (D-024).
+     */
     private fun batteryPower(ecu: EcuTarget) =
         mode22("battery_power_${ecu.requestHeader}", "Potenza batteria", ecu, "1F9A", "kW", 1, 6) { b ->
             val volts = unsigned16(b, 2) / 64.0
-            val amps = signed16(b, 4) / 10.0
+            val amps = twosComplement16(b, 4) / 10.0
             volts * amps / 1000
         }
 
@@ -70,6 +87,7 @@ object DriveSignals {
 
     private fun unsigned16(bytes: List<Int>, index: Int) = bytes[index] * 256 + bytes[index + 1]
     private fun signed16(bytes: List<Int>, index: Int) = unsigned16(bytes, index) - 32768
+    private fun twosComplement16(bytes: List<Int>, index: Int) = unsigned16(bytes, index).let { if (it >= 32768) it - 65536 else it }
 
     private fun mode22(
         id: String, label: String, ecu: EcuTarget, did: String, unit: String, decimals: Int, dataBytes: Int,

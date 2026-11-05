@@ -195,7 +195,9 @@ private fun BrakeCard(state: SessionState?, now: Long) {
     val indicator = if (state == null) BrakeIndicator.Unavailable("non avviato") else brakeIndicator(state, now)
     val (color, title, below) = when (indicator) {
         is BrakeIndicator.Idle -> Triple(Grey, indicator.label, "—")
-        is BrakeIndicator.Regenerative -> Triple(Green, "Rigenerativa", "rigenerativa ${indicator.intensityPercent?.let { "$it %" } ?: "—"}")
+        is BrakeIndicator.Regenerative -> Triple(
+            Green, if (indicator.liftOff) "Rilascio" else "Rigenerativa", "rigenerativa ${indicator.intensityPercent?.let { "$it %" } ?: "—"}",
+        )
         is BrakeIndicator.Friction -> Triple(Red, "Attrito", "attrito ${indicator.frictionPercent} %")
         is BrakeIndicator.Unavailable -> Triple(Amber, "Non disponibile", indicator.reason)
     }

@@ -1,0 +1,49 @@
+{"type":"session","startedAtEpochMs":1793911768463,"source":"live","appVersion":"0.3.0"}
+{"type":"event","t":1793911782577,"event":"connect_failed","detail":"LX non raggiungibile: read failed, socket might closed or timeout, read ret: -1"}
+{"type":"event","t":1793911786513,"event":"connected"}
+{"type":"exchange","t":1793911786516,"cmd":"ATZ","durationMs":865,"raw":"\r\rELM327 v1.4b\r\r"}
+{"type":"exchange","t":1793911787383,"cmd":"ATE0","durationMs":11,"raw":"ATE0\rOK\r\r"}
+{"type":"exchange","t":1793911787397,"cmd":"ATL0","durationMs":8,"raw":"OK\r\r"}
+{"type":"exchange","t":1793911787406,"cmd":"ATH1","durationMs":8,"raw":"OK\r\r"}
+{"type":"exchange","t":1793911787416,"cmd":"ATSP0","durationMs":9,"raw":"OK\r\r"}
+{"type":"exchange","t":1793911787427,"cmd":"ATI","durationMs":27,"raw":"ELM327 v1.4b\r\r"}
+{"type":"exchange","t":1793911787456,"cmd":"STI","durationMs":38,"raw":"STN1155 v5.6.19\r\r"}
+{"type":"exchange","t":1793911787498,"cmd":"0100","durationMs":4667,"raw":"SEARCHING...\r7EE 06 41 00 98 1A 80 03 \r7E8 06 41 00 BE 1F A0 13 \r7EA 06 41 00 98 1A 80 03 \r7EB 06 41 00 98 18 80 03 \r\r"}
+{"type":"exchange","t":1793911792169,"cmd":"ATDP","durationMs":8,"raw":"AUTO, ISO 15765-4 (CAN 11/500)\r\r"}
+{"type":"exchange","t":1793911792179,"cmd":"010C","durationMs":149,"raw":"7EB 04 41 0C 14 00 \r7EE 04 41 0C 14 00 \r7E8 04 41 0C 14 5C \r7EA 04 41 0C 14 00 \r\r"}
+{"type":"exchange","t":1793911792332,"cmd":"010D","durationMs":169,"raw":"7E8 03 41 0D 00 \r7EA 03 41 0D 00 \r7EE 03 41 0D 00 \r7EB 03 41 0D 00 \r\r"}
+{"type":"exchange","t":1793911792504,"cmd":"0105","durationMs":121,"raw":"7EE 03 41 05 54 \r7E8 03 41 05 54 \r7EA 03 41 05 54 \r7EB 03 41 05 54 \r\r"}
+{"type":"exchange","t":1793911792627,"cmd":"0104","durationMs":202,"raw":"7EE 03 41 04 2B \r7E8 03 41 04 2B \r7EA 03 41 04 2B \r7EB 03 41 04 2B \r\r"}
+{"type":"exchange","t":1793911792832,"cmd":"ATRV","durationMs":7,"raw":"14.1V\r\r"}
+{"type":"exchange","t":1793911792842,"cmd":"010C","durationMs":126,"raw":"7EB 04 41 0C 14 00 \r7EE 04 41 0C 14 00 \r7E8 04 41 0C 14 6C \r7EA 04 41 0C 14 00 \r\r"}
+{"type":"exchange","t":1793911792970,"cmd":"010D","durationMs":97,"raw":"7EE 03 41 0D 00 \r7EB 03 41 0D 00 \r7E8 03 41 0D 00 \r7EA 03 41 0D 00 \r\r"}
+{"type":"exchange","t":1793911793070,"cmd":"0105","durationMs":44,"raw":"7EE 03 41 05 54 \r7E8 03 41 05 54 \r7EA 03 41 05 54 \r7EB 03 41 05 54 \r\r"}
+{"type":"exchange","t":1793911793116,"cmd":"0104","durationMs":96,"raw":"7E8 03 41 04 2B \r7EA 03 41 04 2B \r7EE 03 41 04 2B \r7EB 03 41 04 2B \r\r"}
+{"type":"exchange","t":1793911793215,"cmd":"ATRV","durationMs":9,"raw":"14.1V\r\r"}
+{"type":"exchange","t":1793911793226,"cmd":"010C","durationMs":130,"raw":"7EE 04 41 0C 14 00 \r7EB 04 41 0C 14 00 \r7E8 04 41 0C 14 62 \r7EA 04 41 0C 14 00 \r\r"}
+{"type":"exchange","t":1793911793359,"cmd":"010D","durationMs":233,"raw":"7EB 03 41 0D 00 \r7EE 03 41 0D 00 \r7E8 03 41 0D 00 \r7EA 03 41 0D 00 \r\r"}
+{"type":"exchange","t":1793911793594,"cmd":"0105","durationMs":156,"raw":"7E8 03 41 05 54 \r7EA 03 41 05 54 \r7EE 03 41 05 54 \r7EB 03 41 05 54 \r\r"}
+{"type":"exchange","t":1793911793753,"cmd":"0104","durationMs":164,"raw":"7E8 03 41 04 2B \r7EE 03 41 04 2B \r7EA 03 41 04 2B \r7EB 03 41 04 2B \r\r"}
+{"type":"exchange","t":1793911793920,"cmd":"ATRV","durationMs":8,"raw":"14.0V\r\r"}
+{"type":"exchange","t":1793911793929,"cmd":"010C","durationMs":156,"raw":"7EE 04 41 0C 14 00 \r7E8 04 41 0C 14 59 \r7EA 04 41 0C 14 00 \r7EB 04 41 0C 14 00 \r\r"}
+{"type":"exchange","t":1793911794087,"cmd":"010D","durationMs":261,"raw":"7E8 03 41 0D 00 \r7EA 03 41 0D 00 \r7EE 03 41 0D 00 \r7EB 03 41 0D 00 \r\r"}
+{"type":"exchange","t":1793911794351,"cmd":"0105","durationMs":108,"raw":"7EE 03 41 05 54 \r7E8 03 41 05 54 \r7EA 03 41 05 54 \r7EB 03 41 05 54 \r\r"}
+{"type":"exchange","t":1793911794462,"cmd":"0104","durationMs":85,"raw":"7E8 03 41 04 2A \r7EA 03 41 04 2B \r7EE 03 41 04 2B \r7EB 03 41 04 2B \r\r"}
+{"type":"exchange","t":1793911794552,"cmd":"ATRV","durationMs":7,"raw":"14.1V\r\r"}
+{"type":"exchange","t":1793911794560,"cmd":"010C","durationMs":79,"raw":"7EE 04 41 0C 14 00 \r7E8 04 41 0C 14 69 \r7EA 04 41 0C 14 00 \r7EB 04 41 0C 14 00 \r\r"}
+{"type":"exchange","t":1793911794642,"cmd":"010D","durationMs":50,"raw":"7E8 03 41 0D 00 \r7EA 03 41 0D 00 \r7EE 03 41 0D 00 \r7EB 03 41 0D 00 \r\r"}
+{"type":"exchange","t":1793911794695,"cmd":"0105","durationMs":80,"raw":"7EE 03 41 05 54 \r7E8 03 41 05 54 \r7EA 03 41 05 54 \r7EB 03 41 05 54 \r\r"}
+{"type":"exchange","t":1793911794777,"cmd":"0104","durationMs":53,"raw":"7E8 03 41 04 2A \r7EA 03 41 04 2B \r7EE 03 41 04 2B \r7EB 03 41 04 2B \r\r"}
+{"type":"exchange","t":1793911794832,"cmd":"ATRV","durationMs":8,"raw":"14.0V\r\r"}
+{"type":"exchange","t":1793911794841,"cmd":"010C","durationMs":108,"raw":"7E8 04 41 0C 14 75 \r7EE 04 41 0C 14 00 \r7EA 04 41 0C 14 00 \r7EB 04 41 0C 14 00 \r\r"}
+{"type":"exchange","t":1793911794952,"cmd":"010D","durationMs":71,"raw":"7E8 03 41 0D 00 \r7EA 03 41 0D 00 \r7EE 03 41 0D 00 \r7EB 03 41 0D 00 \r\r"}
+{"type":"exchange","t":1793911795026,"cmd":"0105","durationMs":103,"raw":"7EE 03 41 05 54 \r7EB 03 41 05 54 \r7E8 03 41 05 54 \r7EA 03 41 05 54 \r\r"}
+{"type":"exchange","t":1793911795131,"cmd":"0104","durationMs":112,"raw":"7EE 03 41 04 2B \r7E8 03 41 04 2A \r7EA 03 41 04 2B \r7EB 03 41 04 2B \r\r"}
+{"type":"exchange","t":1793911795245,"cmd":"ATRV","durationMs":10,"raw":"14.1V\r\r"}
+{"type":"exchange","t":1793911795257,"cmd":"010C","durationMs":93,"raw":"7EA 04 41 0C 14 00 \r7EE 04 41 0C 14 00 \r7EB 04 41 0C 14 00 \r7E8 04 41 0C 14 69 \r\r"}
+{"type":"exchange","t":1793911795353,"cmd":"010D","durationMs":78,"raw":"7EB 03 41 0D 00 \r7EE 03 41 0D 00 \r7E8 03 41 0D 00 \r7EA 03 41 0D 00 \r\r"}
+{"type":"exchange","t":1793911795433,"cmd":"0105","durationMs":85,"raw":"7E8 03 41 05 54 \r7EA 03 41 05 54 \r7EE 03 41 05 54 \r7EB 03 41 05 54 \r\r"}
+{"type":"exchange","t":1793911795521,"cmd":"0104","durationMs":92,"raw":"7E8 03 41 04 2A \r7EE 03 41 04 2A \r7EA 03 41 04 2A \r7EB 03 41 04 2A \r\r"}
+{"type":"exchange","t":1793911795616,"cmd":"ATRV","durationMs":9,"raw":"14.1V\r\r"}
+{"type":"exchange","t":1793911795627,"cmd":"010C","durationMs":93,"raw":"7EB 04 41 0C 14 00 \r7EE 04 41 0C 14 00 \r7E8 04 41 0C 14 6F \r7EA 04 41 0C 14 00 \r\r"}
+{"type":"exchange","t":1793911795722,"cmd":"010D","durationMs":114,"raw":"7EB 03 41 0D 00 \r7EE 03 41 0D 00 \r7E8 03 41 0D 00 \r7EA 03 41 0D 00 \r\r"}

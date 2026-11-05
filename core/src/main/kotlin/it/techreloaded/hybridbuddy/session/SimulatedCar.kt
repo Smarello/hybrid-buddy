@@ -21,10 +21,10 @@ class SimulatedCar(
 ) : AdapterConnector {
     private val startedAt = clock()
 
-    /** Car state at [seconds] into the loop. Torques in Nm (≤ 0 braking), powers in kW (battery < 0 = charging). */
+    /** Car state at [seconds] into the loop. Torques in Nm (≤ 0 braking), powers in kW (battery < 0 = charging), pedal in %. */
     data class Moment(
         val speedKmh: Double, val rpm: Double, val engineTorqueNm: Double,
-        val brakeRequestNm: Double, val regenNm: Double, val batteryKw: Double,
+        val brakeRequestNm: Double, val regenNm: Double, val batteryKw: Double, val acceleratorPercent: Double,
     )
 
     override suspend fun connect(): AdapterLink {
@@ -50,13 +50,14 @@ class SimulatedCar(
         if (header in refusingEcus) return frames(response, listOf(0x7F, command.substring(0, 2).toInt(16), 0x31))
         val now = moment(((clock() - startedAt) / 1000.0) % LOOP_SECONDS)
         val payload = when (header to command) {
-            "7E0" to "010C" -> listOf(0x41, 0x0C) + word((now.rpm * 4).roundToInt())
-            "7E0" to "010D" -> listOf(0x41, 0x0D, now.speedKmh.roundToInt())
+            "7DF" to "010C" -> listOf(0x41, 0x0C) + word((now.rpm * 4).roundToInt())
+            "7DF" to "010D" -> listOf(0x41, 0x0D, now.speedKmh.roundToInt())
             "7D2" to "221067" -> did(0x1067, word(signed(now.brakeRequestNm * 8)) + listOf(0, 0))
             "7D2" to "221069" -> did(0x1069, listOf(0, 0) + word(signed(now.regenNm * 8)))
+            "7D2" to "221060" -> did(0x1060, listOf((now.acceleratorPercent * 2).roundToInt()))
             "747" to "221F9A", "7D2" to "221F9A" -> {
                 val amps = now.batteryKw * 1000 / VOLTS
-                did(0x1F9A, listOf(0, 0) + word((VOLTS * 64).roundToInt()) + word(signed(amps * 10)) + listOf(0))
+                did(0x1F9A, listOf(0, 0) + word((VOLTS * 64).roundToInt()) + word(twosComplement(amps * 10)) + listOf(0))
             }
             "747" to "221807", "7D2" to "221807" -> did(0x1807, word(signed(CHARGE_LIMIT_KW * 100)) + word(signed(DISCHARGE_LIMIT_KW * 100)))
             "700" to "2210C2" -> did(0x10C2, word(signed(now.engineTorqueNm)))
@@ -71,17 +72,19 @@ class SimulatedCar(
         private const val CHARGE_LIMIT_KW = 25.0
         private const val DISCHARGE_LIMIT_KW = 30.0
 
+        /** Acceleration, cruise, accelerator released (coasting), regenerative braking, friction braking, stop, standstill. */
         fun moment(seconds: Double): Moment = when {
-            seconds < 15 -> Moment(70 * seconds / 15, 2500.0, 90.0, 0.0, 0.0, 8.0)
-            seconds < 25 -> Moment(70.0, 1800.0, 60.0, 0.0, 0.0, 1.5)
-            seconds < 33 -> Moment(70 - 25 * (seconds - 25) / 8, 0.0, 0.0, -60.0, -60.0, -12.0)
-            seconds < 41 -> Moment(45 - 27 * (seconds - 33) / 8, 0.0, 0.0, -150.0, -70.0, -18.0)
-            seconds < 46 -> Moment(18 - 18 * (seconds - 41) / 5, 0.0, 0.0, -80.0, -10.0, -2.0)
-            else -> Moment(0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
+            seconds < 15 -> Moment(70 * seconds / 15, 2500.0, 90.0, 0.0, 0.0, 8.0, 40.0)
+            seconds < 25 -> Moment(70.0, 1800.0, 60.0, 0.0, 0.0, 1.5, 20.0)
+            seconds < 29 -> Moment(70 - 8 * (seconds - 25) / 4, 0.0, 0.0, 0.0, 0.0, -4.0, 0.0)
+            seconds < 33 -> Moment(62 - 17 * (seconds - 29) / 4, 0.0, 0.0, -60.0, -60.0, -12.0, 0.0)
+            seconds < 41 -> Moment(45 - 27 * (seconds - 33) / 8, 0.0, 0.0, -150.0, -70.0, -18.0, 0.0)
+            seconds < 46 -> Moment(18 - 18 * (seconds - 41) / 5, 0.0, 0.0, -80.0, -10.0, -2.0, 0.0)
+            else -> Moment(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
         }
 
         private fun responseHeader(header: String) = when (header) {
-            "7E0" -> "7E8"
+            "7DF" -> "7E8"
             "7D2" -> "7DA"
             "747" -> "74F"
             "700" -> "708"
@@ -89,6 +92,7 @@ class SimulatedCar(
         }
 
         private fun signed(value: Double) = value.roundToInt() + 32768
+        private fun twosComplement(value: Double) = value.roundToInt() and 0xFFFF
         private fun word(value: Int) = listOf((value shr 8) and 0xFF, value and 0xFF)
         private fun did(did: Int, data: List<Int>) = listOf(0x62, did shr 8, did and 0xFF) + data
 

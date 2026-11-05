@@ -169,7 +169,9 @@ Con `R = _brake_regen_trq`, `M = _brake_mastcyl_trq` (Nm, ≤ 0 in frenata), cop
    - `Braking` = punto 1; `Moving` = velocità ≥ 2 (`_v130_5`; la velocità è moltiplicata per un fattore delle preferenze);
    - `Braking while moving` = Braking e Moving;
    - con Braking: `Bad brake` se il punto 2 dà attrito, altrimenti `Good brake`; senza Braking entrambi spenti;
-   - `Coasting` = Moving, acceleratore non premuto, non Braking (più altre condizioni).
+   - `EV` = giri termico < 800 (`_v130_4`); `ICE spinning` = coppia termica < 0 con giri > 0 (termico trascinato o in
+     avviamento); `ICE off` = EV oppure ICE spinning; `Moving` = velocità ≥ 2 km/h (`_v130_5`) **[rea, `ev_5d121490540e`]**;
+   - `Coasting` = (Moving ∧ acceleratore non premuto ∧ non Braking ∧ ICE off) oppure ICE spinning.
 4. **Storico frenate** (icone): un evento inizia sul fronte di salita di `Braking while moving`; i campioni contano solo
    se **velocità OBD > `m_brakespeed`** (15 km/h per Yaris MY20, letto da `cartype` in `carstate._v101_5`). A fine
    frenata: `good` se tutti i campioni erano good o i bad sono ≤ 2; `bad` se i bad superano metà dei good; altrimenti
@@ -189,6 +191,22 @@ Durante `Braking while moving`:
 Quindi la pallina **sopra il centro** indica la quota di frenata ad attrito (0–100 %), **sotto il centro** l'intensità
 della rigenerazione rispetto al limite di carica della batteria. Le soglie di colore (giallo sotto 75, rosso verso 100,
 verde in regen) vengono dalla prima passata e non sono state ricontrollate con rea **[non verificato con rea]**.
+
+**Fuori da `Braking while moving`** (stesso metodo, ricontrollato il 2026-11-05 con `carstate._v49_5`, `ev_5d121490540e`) [rea]:
+
+- Stato `EV` con velocità ≥ 20 km/h (`_v136_7`): la pallina mostra la **potenza HV** `P` (`_v110_6` = I·V/1000; con una
+  preferenza, la potenza termica `_v146_2`): valore = 100 − indice di glide, con indice di glide = (1 − |P| / 2 kW)·100
+  (`_v136_0`, `_v136_6` = 2.0); il segno segue P: **P < 0 (batteria in carica) → pallina sotto il centro**, P > 0 → sopra,
+  P = 0 → centro. Colore `colortools._v47_5`. Stato `ICE spinning`: stesso valore ±|P| / 2 kW · 100.
+- Termico acceso (Toyota): valore dai giri MG1 (`_v141_2` / 10, 100 oltre 1000 rpm, colore a parte se negativi).
+- Velocità < 20 km/h in EV: valore −(20 − velocità)·100/20, colore neutro.
+
+Conseguenza: **la rigenerazione al rilascio dell'acceleratore è mostrata dalla HyBall tramite la potenza della batteria**,
+su una scala di ±2 kW pensata per il "glide" (pallina a fondo scala già a −2 kW), non tramite `1067`/`1069`, che valgono
+0 senza pedale (confermato sulla Yaris 2026 nella guida del 2026-11-05: −2…−8 kW in carica con M = R = 0). Le statistiche
+seguono la stessa divisione: `_avg_kwforregen` è alimentata da `P` nello stato `Coasting`, `_avg_kwforbrake` da `P` in
+`Braking while moving` + `Good brake`. Per Hybrid Buddy: l'anello deve coprire due casi distinti, pedale (`1067`/`1069`,
+attrito o rigenerativa) e rilascio (potenza HV negativa con pedale non premuto e termico spento o trascinato).
 
 ## 7. Yaris 2026 senza VIN (`cartype._v101_5`) [rea]
 

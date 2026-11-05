@@ -10,8 +10,8 @@ risponde), `ATSP0` (protocollo automatico), identificazione `ATI` / `STI`, proto
 
 | Segnale | Centralina | Richiesta | Formato risposta | Conversione | Unità | Fonte | Prove | Stato |
 |---|---|---|---|---|---|---|---|---|
-| Giri motore termico | 7E8 (preferita se rispondono più centraline) | `010C` | `7E8 04 41 0C A B` | (A·256+B)/4 | rpm | SAE J1979 PID 0x0C | test JVM; prova reale 0.1.1 | risposta ricevuta |
-| Velocità veicolo | 7E8 | `010D` | `7E8 03 41 0D A` | A | km/h | SAE J1979 PID 0x0D | test JVM; prova reale 0.1.1 (solo 0, da fermo) | risposta ricevuta |
+| Giri motore termico | 7E8 (preferita se rispondono più centraline) | `010C` | `7E8 04 41 0C A B` | (A·256+B)/4 | rpm | SAE J1979 PID 0x0C | test JVM; prova reale 0.1.1; guida 0.3.0: 22/22 `NO DATA` con `ATSH 7E0` (fisico), risposte con 7DF (D-023) | risposta ricevuta |
+| Velocità veicolo | 7E8 | `010D` | `7E8 03 41 0D A` | A | km/h | SAE J1979 PID 0x0D | test JVM; prova reale 0.1.1 (solo 0, da fermo); guida 0.3.0: 22/22 `NO DATA` con `ATSH 7E0` (fisico), risposte con 7DF (D-023) | risposta ricevuta |
 | Temperatura refrigerante | 7E8 | `0105` | `7E8 03 41 05 A` | A−40 | °C | SAE J1979 PID 0x05 | test JVM; prova reale 0.1.1 | risposta ricevuta |
 | Carico calcolato | 7E8 | `0104` | `7E8 03 41 04 A` | A·100/255 | % | SAE J1979 PID 0x04 | test JVM; prova reale 0.1.1 | risposta ricevuta — solo diagnostica, **non** usabile per la potenza termica |
 | Tensione all'adattatore | OBDLink (non centralina) | `ATRV` | `14.1V` | numero prima di `V` | V | OBDLink FRPM | test JVM; prova reale 0.1.1 | risposta ricevuta |
@@ -81,25 +81,33 @@ dopo `62 DID DID`. Centralina **7D2 → 7DA** (ibrida, mai interrogata finora: l
 
 | Segnale | Centralina | Richiesta | Byte | Conversione | Unità | Fonte | Prove | Stato |
 |---|---|---|---|---|---|---|---|---|
-| Coppia richiesta dal freno (`brake_mastcyl_trq`) | 7D2 | `221067` | b1-b2 | (raw−32768)/8 | Nm (≤ 0 in frenata) | HA `scanner._v243_3` | nessuna | candidato |
-| Coppia rigenerativa (`brake_regen_trq`) | 7D2 | `221069` | b3-b4 | (raw−32768)/8 | Nm (≤ 0 in frenata) | HA `scanner._v243_3` | nessuna | candidato |
-| Pedale acceleratore (dall'uso) | 7D2 | `221060` | b1 | raw/2 | % | HA | nessuna | candidato |
+| Coppia richiesta dal freno (`brake_mastcyl_trq`) | 7D2 | `221067` | b1-b2 | (raw−32768)/8 | Nm (≤ 0 in frenata) | HA `scanner._v243_3` | guida 2026-11-05 (0.3.0): 622 risposte `7DA 05 62 10 67 ..`; 0 senza pedale (anche in rilascio con batteria in carica), −5…−192 Nm frenando in marcia, −500…−1024 da fermo col pedale premuto | risposta ricevuta |
+| Coppia rigenerativa (`brake_regen_trq`) | 7D2 | `221069` | b3-b4 | (raw−32768)/8 | Nm (≤ 0 in frenata) | HA `scanner._v243_3` | guida 2026-11-05: 622 risposte; 0 senza pedale, −3…−195 Nm col pedale, spesso uguale a M (frenata solo rigenerativa), 0 da fermo | risposta ricevuta |
+| Pedale acceleratore (dall'uso) | 7D2 | `221060` | b1 | raw/2 | % | HA (`_v4_5`, "premuto" se > 0) | letto dalla Guida 0.3.2 per lo stato «Rilascio» (D-026); mai provato | candidato |
 | Giri / coppia MG1 | 7D2 | `2210A0` | b1-b2 / b7-b8 | raw−32768 / (raw−32768)/8 | rpm / Nm | HA (anche lettura diretta nel sequencer `china`) | nessuna | candidato |
 | Giri / coppia MG2 | 7D2 | `2210A1` | b1-b2 / b7-b8 | raw−32768 / (raw−32768)/8 | rpm / Nm | HA (idem) | nessuna | candidato |
-| Tensione HV | 747 (Li-ion) o 7D2 | `221F9A` | b3-b4 | raw/64 | V | HA | nessuna | candidato |
-| Corrente HV | 747 o 7D2 | `221F9A` | b5-b6 | DDDI: 12 bit con segno (`b5 & 0x0F`)/10; lettura diretta in HA: (raw−32768)/10 | A (< 0 in carica, **ipotesi**) | HA (due forme nel codice) | nessuna | candidato |
-| Limite di carica / scarica (dall'uso) | 747 o 7D2 | `221807` | b1-b2 / b3-b4 | (raw−32768)/100 | kW | HA | nessuna | candidato |
+| Tensione HV | 747 (Li-ion) o 7D2 | `221F9A` | b3-b4 | raw/64 | V | HA | guida 2026-11-05: 747 e 7D2 rispondono (multi-frame), 168–189 V | risposta ricevuta |
+| Corrente HV | 747 o 7D2 | `221F9A` | b5-b6 | **complemento a due a 16 bit, /10** (la forma (raw−32768)/10 della lettura diretta in HA darebbe ±3270 A; la DDDI a 12 bit non si applica) | A (< 0 in carica, confermato dal segno in frenata) | HA; forma decisa sulla registrazione (D-024) | guida 2026-11-05: +3 A da fermo in READY, −159…+156 A in marcia; P = V·I = −30…+27 kW | risposta ricevuta |
+| Limite di carica / scarica (dall'uso) | 747 o 7D2 | `221807` | b1-b2 / b3-b4 | (raw−32768)/100 | kW | HA | guida 2026-11-05: 747 risponde (b1-b2 −35,0…−22,7 kW, varia con la carica; b3-b4 `87D0` = +20,0 kW fisso); **7D2 rifiuta (7F 22 31)** | risposta ricevuta (747) |
 | SOC batteria | 747 o 7D2 | `221F5B` | b1 | raw/2.55 | % | HA | nessuna | candidato |
 
 Potenza termica (dall'uso in HA, `carstate._v123_4`): coppia `2210C2` su **700 → 708**, b1-b2, raw − 32768 Nm (forse coppia
-richiesta, non effettiva), per i giri: P = coppia·2π·giri/60000 kW. **Candidato**, mai provato.
+richiesta, non effettiva), per i giri: P = coppia·2π·giri/60000 kW. Guida 2026-11-05: 708 risponde (0 a termico fermo,
+−108…+86 Nm in marcia): **risposta ricevuta**; il significato (richiesta o effettiva) resta un'ipotesi.
 
-**Letti dalla schermata Guida (0.3.0, D-019/D-020)**: `221067`, `221069` (7D2, ogni giro); `221F9A`, `221807` su 747 e su
-7D2 (ogni 4 giri, preferita 747); `2210C2` su 700 (ogni 4 giri); `010C`, `010D` su 7E0 indirizzata fisicamente (ogni 2 giri).
-Restano tutti **candidati** finché una guida registrata non mostra risposte reali.
+**Letti dalla schermata Guida (0.3.2, D-019/D-020/D-023/D-025/D-026)**: `221067`, `221069`, `221060` (7D2, ogni giro); `221F9A`, `221807`
+su 747 e su 7D2 (ogni 2 giri, preferita 747); `2210C2` su 700 (ogni 2 giri); `010C`, `010D` con richiesta funzionale 7DF
+filtrata su 7E8 (ogni 2 giri). **Prima guida 2026-11-05** (0.3.0, 232 s, `core/src/test/resources/recordings/2026-11-05-a34-guida-0.3.0.jsonl`):
+7D2, 747 e 700 rispondono a tutte le letture dirette (7D2 rifiuta solo `221807`); `010C`/`010D` indirizzati fisicamente a
+7E0 hanno dato 44/44 `NO DATA`, mentre 27 s prima la sessione di base (7DF dopo `ATSP0`) riceveva le risposte di 7E8.
+Frequenze misurate: freno 2,7 letture/s (giro 0,33 s mediano, 0,6 s p90; lettura `22` ~75 ms; ogni cambio centralina = 3
+comandi AT da ~25 ms). Limite emerso: `221067`/`221069` valgono 0 anche quando, al rilascio dell'acceleratore, la batteria
+si carica a −2…−8 kW con il termico a coppia 0: la rigenerazione **senza pedale** non è visibile da questi DID.
 
 Formula di Hybrid Assistant (ramo Yaris): frenata se `M < 0 o R < 0`; attrito se `M − R < 0`; quota d'attrito
-`(M − R)·100/M`; campioni validi sopra 15 km/h (`010D`). Le richieste sono già ammesse da `ReadOnlyCommands`
+`(M − R)·100/M`; campioni validi sopra 15 km/h (`010D`). Senza pedale (stato «Rilascio», D-026): velocità ≥ 2 km/h,
+`221060` = 0, termico spento (giri < 800) o trascinato (coppia `2210C2` < 0), potenza batteria < 0 → anello verde con
+intensità min(1, |P/limite|), come fa la HyBall con la potenza HV negli stati EV / termico trascinato. Le richieste sono già ammesse da `ReadOnlyCommands`
 (`ATSH 7D2`, `ATCRA 7DA`, `22xxxx`); non sappiamo se la centralina le accetta senza sessione estesa e DID dinamici
 (decisione aperta in §8 del documento).
 

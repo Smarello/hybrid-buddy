@@ -10,9 +10,11 @@ import kotlin.math.abs
 import kotlin.math.min
 
 /**
- * Brake indicator of the Guida screen, same rule as Hybrid Assistant (`carstate`, `default` branch for the Yaris MY20):
- * braking when M < 0 or R < 0, friction when M − R < 0, friction share (M − R)·100/M; regeneration intensity
- * min(1, |P / charge limit|). M = torque requested by the brake, R = regenerative torque, P = battery power.
+ * Brake indicator of the Guida screen. Pedal braking is classified as Hybrid Assistant does (`carstate`, `default` branch
+ * for the Yaris MY20): braking when M < 0 or R < 0, friction when M − R < 0, friction share (M − R)·100/M; regeneration
+ * intensity min(1, |P / charge limit|). M = torque requested by the brake, R = regenerative torque, P = battery power.
+ * Without the pedal, the regeneration on accelerator release is read from the battery power while [DriveState.coasting],
+ * as the HyBall of Hybrid Assistant does outside braking (D-026).
  */
 sealed interface BrakeIndicator {
     /** Filling of the ring, 0..1: first half green (regeneration), second half red (friction share). */
@@ -23,8 +25,11 @@ sealed interface BrakeIndicator {
         override val fill = 0.0
     }
 
-    /** Green: regeneration only; [intensityPercent] null when battery power or charge limit is missing. */
-    data class Regenerative(val intensityPercent: Int?) : BrakeIndicator {
+    /**
+     * Green: regeneration only; [intensityPercent] null when battery power or charge limit is missing;
+     * [liftOff] when it comes from releasing the accelerator, not from the brake pedal.
+     */
+    data class Regenerative(val intensityPercent: Int?, val liftOff: Boolean = false) : BrakeIndicator {
         override val fill = (intensityPercent ?: 100) / 200.0
     }
 
@@ -43,32 +48,100 @@ sealed interface BrakeIndicator {
     }
 }
 
+/**
+ * What the car is doing, derived at every evaluation from the fresh signals, as `carstate` of Hybrid Assistant does
+ * (D-026): EV = engine rpm < 800, engine spinning = torque < 0 with rpm ≥ 800, engine off = EV or spinning,
+ * moving = speed ≥ 2 km/h, coasting = moving with the accelerator released, no pedal braking and the engine off.
+ * A state is null when a signal it needs is missing; [coastingReason] names the first missing one.
+ */
+class DriveState(state: SessionState, nowEpochMs: Long) {
+    val brakeRequest = drive(DriveSignals.brakeRequestTorque, state, nowEpochMs)
+    val regen = drive(DriveSignals.regenBrakeTorque, state, nowEpochMs)
+    val speed = drive(DriveSignals.vehicleSpeed, state, nowEpochMs)
+    val accelerator = drive(DriveSignals.acceleratorPedal, state, nowEpochMs)
+    val engineRpm = drive(DriveSignals.engineSpeed, state, nowEpochMs)
+    val engineTorque = drive(DriveSignals.engineTorque, state, nowEpochMs)
+    val batteryPower = batteryPowerKw(state, nowEpochMs)
+    val chargeLimit = preferBatteryEcu(DriveSignals.chargeLimit, DriveSignals.chargeLimitFromHybridEcu, state, nowEpochMs)
+
+    val braking: Boolean? = pedal { m, r -> m < 0 || r < 0 }
+    val frictionBraking: Boolean? = pedal { m, r -> (m < 0 || r < 0) && m - r < 0 }
+    /** (M − R)·100/M, 0..100; null when not braking with friction. */
+    val frictionPercent: Int? = if (frictionBraking == true) {
+        val m = (brakeRequest as Fresh.Value).value
+        val r = (regen as Fresh.Value).value
+        ((m - r) * 100 / m).toInt().coerceIn(0, 100)
+    } else {
+        null
+    }
+    val moving: Boolean? = speed.test { it >= DriveSignals.MOVING_MIN_SPEED_KMH }
+    val acceleratorPressed: Boolean? = accelerator.test { it > 0 }
+    val engineOff: Boolean? = when (val rpm = engineRpm) {
+        is Fresh.Missing -> null
+        is Fresh.Value -> if (rpm.value < DriveSignals.EV_MAX_RPM) true else engineTorque.test { it < 0 }
+    }
+    val regenerating: Boolean? = batteryPower.test { it < 0 }
+    /** min(1, |P / charge limit|)·100; null when power or limit is missing. */
+    val regenIntensityPercent: Int? =
+        if (batteryPower is Fresh.Value && chargeLimit is Fresh.Value) {
+            if (chargeLimit.value == 0.0) 100 else (min(1.0, abs(batteryPower.value / chargeLimit.value)) * 100).toInt()
+        } else {
+            null
+        }
+
+    /** Null when undecidable: a stationary car or a pressed pedal decides it before the other signals are needed. */
+    val coasting: Boolean?
+    val coastingReason: String?
+
+    init {
+        val decided: Pair<Boolean?, String?> = when {
+            moving == null -> null to "velocità: " + (speed as Fresh.Missing).reason
+            moving == false -> false to null
+            braking == null -> null to ((brakeRequest as? Fresh.Missing) ?: regen as Fresh.Missing).reason
+            braking == true -> false to null
+            acceleratorPressed == null -> null to "acceleratore: " + (accelerator as Fresh.Missing).reason
+            acceleratorPressed == true -> false to null
+            engineOff == null -> null to when (val rpm = engineRpm) {
+                is Fresh.Missing -> "giri: " + rpm.reason
+                is Fresh.Value -> "coppia termica: " + (engineTorque as Fresh.Missing).reason
+            }
+            else -> engineOff to null
+        }
+        coasting = decided.first
+        coastingReason = decided.second
+    }
+
+    private fun pedal(test: (m: Double, r: Double) -> Boolean): Boolean? {
+        val m = brakeRequest as? Fresh.Value ?: return null
+        val r = regen as? Fresh.Value ?: return null
+        return test(m.value, r.value)
+    }
+
+    private fun Fresh.test(test: (Double) -> Boolean): Boolean? = (this as? Fresh.Value)?.let { test(it.value) }
+}
+
 fun brakeIndicator(state: SessionState, nowEpochMs: Long): BrakeIndicator {
-    val requested = when (val fresh = drive(DriveSignals.brakeRequestTorque, state, nowEpochMs)) {
-        is Fresh.Missing -> return BrakeIndicator.Unavailable(fresh.reason)
-        is Fresh.Value -> fresh.value
-    }
-    val regenerative = when (val fresh = drive(DriveSignals.regenBrakeTorque, state, nowEpochMs)) {
-        is Fresh.Missing -> return BrakeIndicator.Unavailable(fresh.reason)
-        is Fresh.Value -> fresh.value
-    }
-    if (requested >= 0 && regenerative >= 0) return BrakeIndicator.Idle(BrakeIndicator.NOT_BRAKING)
-    if (requested - regenerative < 0) {
-        val speed = when (val fresh = drive(DriveSignals.vehicleSpeed, state, nowEpochMs)) {
+    val car = DriveState(state, nowEpochMs)
+    (car.brakeRequest as? Fresh.Missing)?.let { return BrakeIndicator.Unavailable(it.reason) }
+    (car.regen as? Fresh.Missing)?.let { return BrakeIndicator.Unavailable(it.reason) }
+    if (car.braking == true) {
+        if (car.frictionBraking != true) return BrakeIndicator.Regenerative(car.regenIntensityPercent)
+        val speed = when (val fresh = car.speed) {
             is Fresh.Missing -> return BrakeIndicator.Unavailable("velocità: ${fresh.reason}")
             is Fresh.Value -> fresh.value
         }
         if (speed <= DriveSignals.BRAKE_MIN_SPEED_KMH) return BrakeIndicator.Idle(BrakeIndicator.BELOW_BRAKE_SPEED)
-        return BrakeIndicator.Friction(((requested - regenerative) * 100 / requested).toInt().coerceIn(0, 100))
+        return BrakeIndicator.Friction(car.frictionPercent!!)
     }
-    val power = batteryPowerKw(state, nowEpochMs)
-    val limit = preferBatteryEcu(DriveSignals.chargeLimit, DriveSignals.chargeLimitFromHybridEcu, state, nowEpochMs)
-    val intensity = if (power is Fresh.Value && limit is Fresh.Value) {
-        if (limit.value == 0.0) 100 else (min(1.0, abs(power.value / limit.value)) * 100).toInt()
-    } else {
-        null
+    return when (car.coasting) {
+        null -> BrakeIndicator.Unavailable("rilascio: ${car.coastingReason}")
+        false -> BrakeIndicator.Idle(BrakeIndicator.NOT_BRAKING)
+        true -> when (car.regenerating) {
+            null -> BrakeIndicator.Unavailable("rilascio: ${(car.batteryPower as Fresh.Missing).reason}")
+            false -> BrakeIndicator.Idle(BrakeIndicator.NOT_BRAKING)
+            true -> BrakeIndicator.Regenerative(car.regenIntensityPercent, liftOff = true)
+        }
     }
-    return BrakeIndicator.Regenerative(intensity)
 }
 
 /** Battery power in kW, negative while charging: 747 first (Li-ion branch of Hybrid Assistant), then 7D2. */

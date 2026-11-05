@@ -7,7 +7,10 @@ sealed interface Decoded {
     data class Failure(val reason: String) : Decoded
 }
 
-/** A control unit addressed physically: requests go to [requestHeader], answers come from [responseHeader]. */
+/**
+ * A control unit addressed with `ATSH`/`ATCRA`: requests go to [requestHeader] (physical, or the functional 7DF),
+ * answers are accepted only from [responseHeader].
+ */
 data class EcuTarget(val requestHeader: String, val responseHeader: String)
 
 /**

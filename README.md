@@ -37,9 +37,10 @@ Sola lettura: l'app può inviare solo richieste di lettura (mode 01/21/22); ogni
 
 ## Guida (fase 4–5, prima prova in marcia)
 Sola lettura, come sempre. Schermata **Guida** dalla schermata principale: un disco del freno con un anello che si
-riempie (vuoto e grigio = nessuna frenata; verde = solo rigenerativa, in proporzione al limite di carica; rosso = interviene
-l'attrito, in proporzione alla quota d'attrito, scritta sotto il disco) e le potenze del **termico** e della **batteria**
-(negativa = in carica). Sotto 15 km/h l'attrito per fermarsi non viene contato. Un dato mancante mostra «Non disponibile»
+riempie (vuoto e grigio = nessuna frenata; verde = solo rigenerativa, in proporzione al limite di carica, con l'etichetta
+«Rilascio» quando viene dal solo rilascio dell'acceleratore; rosso = interviene l'attrito, in proporzione alla quota
+d'attrito, scritta sotto il disco) e le potenze del **termico** e della **batteria** (negativa = in carica). Sotto 15 km/h
+l'attrito per fermarsi non viene contato. Un dato mancante mostra «Non disponibile»
 con la causa (es. «7D2: rifiuta 221067 (7F 22 31)»). Lo schermo resta acceso.
 1. LX inserito e già scelto con **Dispositivo**. Apri **Guida**: l'acquisizione parte da sola (o **▶ Avvia**).
 2. Guarda la riga in alto (LX, Auto, 7D2, 747, 700): verde = la centralina risponde, ✖ rossa = rifiuta o non risponde.
@@ -54,8 +55,9 @@ con la causa (es. «7D2: rifiuta 221067 (7F 22 31)»). Lo schermo resta acceso.
 In replay il bollino in alto e la riga "Sorgente: … (non è l'auto)" lo segnalano sempre.
 
 ## Limiti conosciuti
-- Guida: tutti i segnali sono candidati presi da Hybrid Assistant (Yaris MY20), mai letti su questa Yaris; la corrente
-  della batteria e il significato della coppia termica sono ipotesi (D-021, `SIGNALS.md`).
+- Guida: i segnali vengono da Hybrid Assistant (Yaris MY20); dalla prima guida (2026-11-05) 7D2, 747 e 700 rispondono e la
+  corrente della batteria è confermata (D-024). Il significato della coppia termica e del pedale acceleratore (`221060`,
+  mai letto sulla Yaris) restano ipotesi; «Rilascio» dipende da quel pedale (D-026).
 - I parametri di base usano risposte CAN 11-bit a frame singolo; l'esplorazione ricompone anche le risposte multi-frame.
 - L'esplorazione non si riproduce in replay: il file si analizza fuori dall'app.
 - Il riepilogo "cambiano col pedale" è indicativo (D-016).
