@@ -1,0 +1,9 @@
+{"type":"session","startedAtEpochMs":1793886864298,"source":"live","appVersion":"0.1.0"}
+{"type":"event","t":1793886864306,"event":"connect_failed","detail":"permesso Bluetooth mancante"}
+{"type":"event","t":1793886865310,"event":"connect_failed","detail":"permesso Bluetooth mancante"}
+{"type":"event","t":1793886867313,"event":"connect_failed","detail":"permesso Bluetooth mancante"}
+{"type":"event","t":1793886871324,"event":"connect_failed","detail":"permesso Bluetooth mancante"}
+{"type":"event","t":1793886879333,"event":"connect_failed","detail":"permesso Bluetooth mancante"}
+{"type":"event","t":1793886889339,"event":"connect_failed","detail":"permesso Bluetooth mancante"}
+{"type":"event","t":1793886899346,"event":"connect_failed","detail":"permesso Bluetooth mancante"}
+{"type":"event","t":1793886909355,"event":"connect_failed","detail":"permesso Bluetooth mancante"}
