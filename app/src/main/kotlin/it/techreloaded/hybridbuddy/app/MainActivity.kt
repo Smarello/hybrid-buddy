@@ -92,18 +92,31 @@ private const val SAMPLE_ASSET = "sample-simulated.jsonl"
 private const val VISIBLE_EXCHANGES = 8
 private val exchangeTime = DateTimeFormatter.ofPattern("HH:mm:ss.SSS").withZone(ZoneId.systemDefault())
 
+private enum class Screen { DIAGNOSTICS, EXPLORATION, DRIVE }
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 Surface(Modifier.fillMaxSize()) {
-                    var exploring by rememberSaveable { mutableStateOf(AcquisitionController.isExplorationRunning) }
-                    if (exploring) {
-                        BackHandler { exploring = false }
-                        BrakeExplorationScreen(onBack = { exploring = false })
-                    } else {
-                        DiagnosticsScreen(onExploreBrakes = { exploring = true })
+                    var screen by rememberSaveable {
+                        mutableStateOf(
+                            when {
+                                AcquisitionController.isExplorationRunning -> Screen.EXPLORATION
+                                AcquisitionController.isRunning && AcquisitionController.isDrive(AcquisitionController.session.value) -> Screen.DRIVE
+                                else -> Screen.DIAGNOSTICS
+                            },
+                        )
+                    }
+                    if (screen != Screen.DIAGNOSTICS) BackHandler { screen = Screen.DIAGNOSTICS }
+                    when (screen) {
+                        Screen.EXPLORATION -> BrakeExplorationScreen(onBack = { screen = Screen.DIAGNOSTICS })
+                        Screen.DRIVE -> DriveScreen(onBack = { screen = Screen.DIAGNOSTICS })
+                        Screen.DIAGNOSTICS -> DiagnosticsScreen(
+                            onExploreBrakes = { screen = Screen.EXPLORATION },
+                            onDrive = { screen = Screen.DRIVE },
+                        )
                     }
                 }
             }
@@ -112,7 +125,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun DiagnosticsScreen(onExploreBrakes: () -> Unit) {
+private fun DiagnosticsScreen(onExploreBrakes: () -> Unit, onDrive: () -> Unit) {
     val context = LocalContext.current
     val preferences = remember { context.getSharedPreferences("adapter", Context.MODE_PRIVATE) }
     var adapterAddress by remember { mutableStateOf(preferences.getString("address", null)) }
@@ -191,6 +204,7 @@ private fun DiagnosticsScreen(onExploreBrakes: () -> Unit) {
             OutlinedButton(onClick = { startAfterChoice = false; withBluetoothPermission { choosingDevice = true } }) {
                 Text("Dispositivo")
             }
+            Button(onClick = onDrive) { Text("Guida") }
             OutlinedButton(onClick = onExploreBrakes) { Text("Esplora freni") }
             ReplayMenu(
                 onSample = { startReplay(context, "$SAMPLE_ASSET (SIMULATA)") { context.assets.open(SAMPLE_ASSET) } },
@@ -359,7 +373,7 @@ private fun DevicePicker(onChosen: (address: String, name: String) -> Unit, onDi
     )
 }
 
-private fun startReplay(context: Context, name: String, open: () -> java.io.InputStream) {
+internal fun startReplay(context: Context, name: String, open: () -> java.io.InputStream) {
     val parsed = runCatching { open().bufferedReader().useLines { Recording.parse(it.toList().asSequence()) } }
     parsed.onSuccess { (header, lines) ->
         AcquisitionService.stop(context)
@@ -369,7 +383,7 @@ private fun startReplay(context: Context, name: String, open: () -> java.io.Inpu
     }
 }
 
-private fun displayName(context: Context, uri: Uri): String =
+internal fun displayName(context: Context, uri: Uri): String =
     context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
         if (cursor.moveToFirst()) cursor.getString(0) else null
     } ?: "registrazione"

@@ -6,6 +6,7 @@ import it.techreloaded.hybridbuddy.obdlink.EndOfRecording
 import it.techreloaded.hybridbuddy.obdlink.Exchange
 import it.techreloaded.hybridbuddy.signals.BaseSignals
 import it.techreloaded.hybridbuddy.signals.Decoded
+import it.techreloaded.hybridbuddy.signals.EcuTarget
 import it.techreloaded.hybridbuddy.signals.SignalDefinition
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -55,14 +56,17 @@ data class Timeouts(
 )
 
 /**
- * Acquisition loop: connect, initialize the adapter, poll [signals] in turn, record every
+ * Acquisition loop: connect, initialize the adapter, poll the rounds of [schedule] in turn, record every
  * exchange, and reconnect with backoff whenever the link is lost. Runs until cancelled or,
- * for a replay, until the recording ends. Read-only: only AT/ST setup and mode 01 requests are sent (enforced by ReadOnlyCommands).
+ * for a replay, until the recording ends. Read-only: only AT/ST setup and read requests are sent (enforced by ReadOnlyCommands).
+ * Signals with a target control unit are requested with physical addressing; one failing is retried less and less
+ * often (1, 2, 4, 8, 16 skipped turns) so a refusing or absent unit does not slow the others down.
+ * A schedule mixes targeted and untargeted (broadcast) signals only if every untargeted one comes before the first targeted.
  */
 class AcquisitionSession(
     source: SessionSource,
     private val connector: AdapterConnector,
-    val signals: List<SignalDefinition> = BaseSignals.all,
+    val schedule: List<List<SignalDefinition>> = listOf(BaseSignals.all),
     private val recorder: SessionRecorder? = null,
     private val timeouts: Timeouts = Timeouts(),
     private val io: CoroutineDispatcher = Dispatchers.IO,
@@ -71,7 +75,13 @@ class AcquisitionSession(
     private val mutableState = MutableStateFlow(SessionState(source))
     val state: StateFlow<SessionState> = mutableState
 
+    val signals: List<SignalDefinition> = schedule.flatten().distinct()
+
     private var consecutiveTimeouts = 0
+    private var selectedTarget: EcuTarget? = null
+    private var flowControlSet = false
+    private val consecutiveFailures = mutableMapOf<String, Int>()
+    private val turnsToSkip = mutableMapOf<String, Int>()
 
     private class ConnectionLost(reason: String) : Exception(reason)
 
@@ -115,13 +125,18 @@ class AcquisitionSession(
 
     private suspend fun initialize(connection: ElmConnection) {
         consecutiveTimeouts = 0
+        selectedTarget = null
+        flowControlSet = false
         val (identity, protocol) = initializeAdapter(timeouts) { command, timeout -> execute(connection, command, timeout) }
         mutableState.update { it.copy(adapterIdentity = identity, protocol = protocol) }
     }
 
     private suspend fun poll(connection: ElmConnection) {
         while (currentCoroutineContext().isActive) {
-            for (signal in signals) {
+            for (round in schedule) for (signal in round) {
+                val target = signal.target
+                if (target != null && skipTurn(signal.id)) continue
+                if (target != null && target != selectedTarget) select(connection, target)
                 val timeout = if (signal.command.startsWith("AT")) timeouts.atCommandMs else timeouts.obdRequestMs
                 val exchange = execute(connection, signal.command, timeout)
                 val reading = when (val error = exchange.error) {
@@ -129,11 +144,37 @@ class AcquisitionSession(
                         is Decoded.Value -> SignalReading(exchange.startedAtEpochMs, decoded.value, decoded.ecu, null)
                         is Decoded.Failure -> SignalReading(exchange.startedAtEpochMs, null, null, decoded.reason)
                     }
-                    else -> SignalReading(exchange.startedAtEpochMs, null, null, error)
+                    else -> SignalReading(exchange.startedAtEpochMs, null, null, if (target != null) "non risponde ($error)" else error)
                 }
+                if (target != null) recordOutcome(signal.id, reading.failure == null)
                 mutableState.update { it.copy(readings = it.readings + (signal.id to reading)) }
             }
         }
+    }
+
+    /** Physical addressing of [target], with flow control for its multi-frame answers (OBDLink FRPM, as in D-015). */
+    private suspend fun select(connection: ElmConnection, target: EcuTarget) {
+        val commands = mutableListOf("ATSH ${target.requestHeader}", "ATCRA ${target.responseHeader}", "ATFCSH ${target.requestHeader}")
+        if (!flowControlSet) commands += listOf("ATFCSD 30 00 00", "ATFCSM 1")
+        for (command in commands) execute(connection, command, timeouts.atCommandMs)
+        selectedTarget = target
+        flowControlSet = true
+    }
+
+    private fun skipTurn(signalId: String): Boolean {
+        val skips = turnsToSkip[signalId] ?: 0
+        if (skips > 0) turnsToSkip[signalId] = skips - 1
+        return skips > 0
+    }
+
+    private fun recordOutcome(signalId: String, success: Boolean) {
+        if (success) {
+            consecutiveFailures.remove(signalId)
+            return
+        }
+        val failures = (consecutiveFailures[signalId] ?: 0) + 1
+        consecutiveFailures[signalId] = failures
+        turnsToSkip[signalId] = 1 shl (failures - 1).coerceAtMost(4)
     }
 
     private suspend fun execute(connection: ElmConnection, command: String, timeoutMs: Long): Exchange {

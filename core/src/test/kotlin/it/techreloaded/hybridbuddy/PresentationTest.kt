@@ -36,7 +36,7 @@ class PresentationTest {
     @Test
     fun `stale value is never shown as current`() {
         val old = SignalReading(now - STALE_AFTER_MS - 1, 1240.0, "7E8", null)
-        assertEquals(SignalPresentation.Unavailable("non aggiornato"), presentSignal(rpm, stateWith(old), now))
+        assertEquals(SignalPresentation.Unavailable("dato scaduto"), presentSignal(rpm, stateWith(old), now))
     }
 
     @Test

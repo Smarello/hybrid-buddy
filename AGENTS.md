@@ -24,9 +24,9 @@ python3 tools/generate_sample_recording.py                               # rigen
 | Componente | Dove | Note |
 |---|---|---|
 | Collegamento OBDLink | `core/.../obdlink` | `AdapterLink` (byte), `ElmConnection` (un comando alla volta, prompt `>`, timeout, errori) |
-| Definizioni dei segnali | `core/.../signals` | `SignalDefinition`, `BaseSignals` (PID OBD-II standard), parser mode 01 |
-| Interpretazione | `core/.../interpretation` | valore / "Non disponibile", scadenza dei dati, catena Telefono→LX→Auto→Segnali |
-| Sessione e registrazioni | `core/.../session` | `AcquisitionSession` (connessione, init, polling, riconnessione), JSONL, `ReplayConnector`, mascheramento VIN |
+| Definizioni dei segnali | `core/.../signals` | `SignalDefinition` (con centralina `EcuTarget`), `BaseSignals` (PID OBD-II standard), `DriveSignals` (DID di Hybrid Assistant e calendario), parser mode 01/22 |
+| Interpretazione | `core/.../interpretation` | valore / "Non disponibile", scadenza dei dati, catena Telefono→LX→Auto→Segnali; `Drive.kt`: indicatore di frenata, potenze, stato centraline |
+| Sessione e registrazioni | `core/.../session` | `AcquisitionSession` (connessione, init, polling a giri con indirizzamento fisico, riconnessione), JSONL, `ReplayConnector`, `SimulatedCar`, mascheramento VIN |
 | Esplorazione segnali | `core/.../exploration` | `BrakeExploration` (mappa mode 21/22 per centralina, fasi del pedale, riepilogo); risposte multi-frame con `IsoTp` |
 | Interfaccia e Android | `app/` | Compose, foreground service, Bluetooth SPP, esportazione via FileProvider |
 

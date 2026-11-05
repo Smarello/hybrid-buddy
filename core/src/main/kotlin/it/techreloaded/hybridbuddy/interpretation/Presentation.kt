@@ -8,23 +8,36 @@ import java.util.Locale
 
 /** A value older than this is no longer shown as current. To be tuned on the car. */
 const val STALE_AFTER_MS = 2_000L
-private const val RATE_WINDOW_MS = 5_000L
-private val ITALIAN = Locale.ITALY
+internal const val RATE_WINDOW_MS = 5_000L
+internal val ITALIAN = Locale.ITALY
 
 sealed interface SignalPresentation {
     data class Available(val text: String, val ageMs: Long) : SignalPresentation
     data class Unavailable(val reason: String) : SignalPresentation
 }
 
-/** "Non disponibile" is never shown as zero nor as the last known value. */
-fun presentSignal(signal: SignalDefinition, state: SessionState, nowEpochMs: Long): SignalPresentation {
-    val reading = state.readings[signal.id] ?: return SignalPresentation.Unavailable("in attesa")
-    reading.failure?.let { return SignalPresentation.Unavailable(failureLabel(it)) }
-    val age = nowEpochMs - reading.atEpochMs
-    if (age > STALE_AFTER_MS || reading.value == null) return SignalPresentation.Unavailable("non aggiornato")
-    val number = String.format(ITALIAN, "%,.${signal.decimals}f", reading.value)
-    return SignalPresentation.Available("$number ${signal.unit}", age)
+/** The current value of a signal, or why there is none. */
+sealed interface Fresh {
+    data class Value(val value: Double, val ageMs: Long) : Fresh
+    data class Missing(val reason: String) : Fresh
 }
+
+fun freshValue(signal: SignalDefinition, state: SessionState, nowEpochMs: Long): Fresh {
+    val reading = state.readings[signal.id] ?: return Fresh.Missing("in attesa")
+    reading.failure?.let { return Fresh.Missing(failureLabel(it)) }
+    val age = nowEpochMs - reading.atEpochMs
+    if (age > STALE_AFTER_MS || reading.value == null) return Fresh.Missing("dato scaduto")
+    return Fresh.Value(reading.value, age)
+}
+
+/** "Non disponibile" is never shown as zero nor as the last known value. */
+fun presentSignal(signal: SignalDefinition, state: SessionState, nowEpochMs: Long): SignalPresentation =
+    when (val fresh = freshValue(signal, state, nowEpochMs)) {
+        is Fresh.Missing -> SignalPresentation.Unavailable(fresh.reason)
+        is Fresh.Value -> SignalPresentation.Available(
+            String.format(ITALIAN, "%,.${signal.decimals}f", fresh.value) + " ${signal.unit}", fresh.ageMs,
+        )
+    }
 
 fun failureLabel(error: String): String = when (error) {
     ElmConnection.TIMEOUT -> "timeout"
