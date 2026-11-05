@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "inputs": [
+    "scripts/archetipo/toolchain.sh"
+  ],
+  "outputs": [],
+  "local_files": [],
+  "prepare": [
+    {
+      "name": "android-toolchain",
+      "argv": [
+        "scripts/archetipo/toolchain.sh",
+        "install"
+      ],
+      "timeout_seconds": 1800
+    }
+  ],
+  "probe": [
+    {
+      "name": "android-toolchain",
+      "argv": [
+        "scripts/archetipo/toolchain.sh",
+        "probe"
+      ],
+      "timeout_seconds": 120
+    }
+  ],
+  "checks": {
+    "build-and-test": {
+      "name": "build-and-test",
+      "argv": [
+        "scripts/archetipo/toolchain.sh",
+        "run",
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        ":core:test",
+        "assembleDebug"
+      ],
+      "timeout_seconds": 1500,
+      "inputs": [
+        "scripts/archetipo/toolchain.sh",
+        "settings.gradle.kts",
+        "build.gradle.kts",
+        "gradle.properties",
+        "gradle",
+        "gradlew",
+        "core/build.gradle.kts",
+        "core/src",
+        "app/build.gradle.kts",
+        "app/src"
+      ],
+      "cache": true
+    }
+  }
+}
