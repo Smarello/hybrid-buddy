@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "inputs": [
+    "scripts/archetipo/toolchain.sh"
+  ],
+  "outputs": [],
+  "local_files": [],
+  "prepare": [
+    {
+      "name": "android-toolchain",
+      "argv": [
+        "scripts/archetipo/toolchain.sh",
+        "install"
+      ],
+      "timeout_seconds": 1800
+    }
+  ],
+  "probe": [
+    {
+      "name": "android-toolchain",
+      "argv": [
+        "scripts/archetipo/toolchain.sh",
+        "probe"
+      ],
+      "timeout_seconds": 120
+    }
+  ],
+  "checks": {
+    "android-lint": {
+      "name": "android-lint",
+      "argv": [
+        "scripts/archetipo/toolchain.sh",
+        "run",
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        ":app:lintDebug"
+      ],
+      "timeout_seconds": 1500,
+      "inputs": [
+        "scripts/archetipo/toolchain.sh",
+        "settings.gradle.kts",
+        "build.gradle.kts",
+        "gradle.properties",
+        "gradle",
+        "gradlew",
+        "core/build.gradle.kts",
+        "core/src",
+        "app/build.gradle.kts",
+        "app/src"
+      ],
+      "cache": true
+    },
+    "assemble-debug": {
+      "name": "assemble-debug",
+      "argv": [
+        "scripts/archetipo/toolchain.sh",
+        "run",
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        "assembleDebug"
+      ],
+      "timeout_seconds": 1500,
+      "inputs": [
+        "scripts/archetipo/toolchain.sh",
+        "settings.gradle.kts",
+        "build.gradle.kts",
+        "gradle.properties",
+        "gradle",
+        "gradlew",
+        "core/build.gradle.kts",
+        "core/src",
+        "app/build.gradle.kts",
+        "app/src"
+      ],
+      "cache": true
+    },
+    "core-unit-tests": {
+      "name": "core-unit-tests",
+      "argv": [
+        "scripts/archetipo/toolchain.sh",
+        "run",
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        ":core:test",
+        "--rerun"
+      ],
+      "timeout_seconds": 1200,
+      "inputs": [
+        "scripts/archetipo/toolchain.sh",
+        "settings.gradle.kts",
+        "build.gradle.kts",
+        "gradle.properties",
+        "gradle",
+        "gradlew",
+        "core/build.gradle.kts",
+        "core/src",
+        "app/build.gradle.kts",
+        "app/src/main/assets/sample-simulated.jsonl"
+      ],
+      "cache": true
+    }
+  }
+}
