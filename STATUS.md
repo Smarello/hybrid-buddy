@@ -1,23 +1,24 @@
 # STATUS.md
 
-**Aggiornato:** 2026-11-05 · versione app 0.1.1
+**Aggiornato:** 2026-11-05 · versione app 0.2.0
 
 ## Ultimo risultato verificato
-- **Prima prova sul Galaxy A34 (0.1.0)**: installazione e avvio riusciti; l'esportazione funziona. Ogni tentativo di
-  connessione falliva con "permesso Bluetooth mancante" (registrazione:
-  `core/src/test/resources/recordings/2026-11-05-a34-permesso-bluetooth.jsonl`). Causa: `cancelDiscovery()` richiede
-  `BLUETOOTH_SCAN` da Android 12; corretto in 0.1.1 (D-012). **La correzione non è ancora provata sul telefono.**
-- `./gradlew :core:test`: 24 test JVM superati (3 esecuzioni consecutive): conversioni PID, risposte spezzate, timeout,
-  errori dell'adattatore, disconnessione a metà risposta, riconnessione, adattatore muto, dati mancanti/scaduti,
-  catena di collegamento, registrazione → replay, assenza di VIN/MAC, esempio SIMULATO riproducibile.
-- `./gradlew assembleDebug`: APK debug generato.
-- **Non verificato**: rendering della schermata su un dispositivo (nessun emulatore/telefono collegato all'ambiente),
-  connessione Bluetooth reale, comportamento della Yaris. Tutto ciò che riguarda l'auto è ipotetico.
+- **Prova da fermo sul Galaxy A34 (0.1.1)**: connessione all'LX riuscita al primo tentativo, 138 s senza errori;
+  STN1155 v5.6.19, CAN 11/500, 4 centraline rispondono al `0100` (7E8, 7EA, 7EB, 7EE); valori plausibili al minimo
+  (dettagli in `SIGNALS.md`). Registrazione: `core/src/test/resources/recordings/2026-11-05-a34-prova-da-fermo-0.1.1.jsonl`.
+  Stacco/riattacco dell'LX e schermo spento **non provati** (rinviati dal proprietario, D-013).
+- **0.2.0 — Esplora freni** (fase 3, primo passo): build, lint e test JVM superati, inclusi lista dei comandi consentiti,
+  ricomposizione multi-frame, mappa con centralina muta saltata, fasi del pedale registrate, conteggio dei byte che
+  cambiano col pedale, mascheramento VIN, interruzione e mancata connessione; la registrazione 0.1.1 è un test permanente.
+- **Non verificato**: rendering della nuova schermata sul telefono, risposte reali di 7E2/7B0 alle richieste mode 21/22,
+  durata reale della mappa. Nessun segnale dei freni è ancora noto.
 
 ## Problema aperto
-Connessione reale all'LX mai riuscita finora: va ripetuta la prova da fermo con la 0.1.1 (vedi `README.md`).
+Non sappiamo se la Yaris 2026 risponde a mode 21/22 su 7E2 e 7B0, né quali dati descrivano pedale, pressione o rigenerazione.
 
 ## Prossimo passo
-1. Il proprietario installa l'APK ed esegue la prova da fermo; esporta la registrazione e la consegna.
-2. L'agente analizza la registrazione, la aggiunge ai test e aggiorna `SIGNALS.md` (risposte ricevute, centraline).
-3. Fase 3: ricerca e prova dei segnali HV, potenza termica e frenata.
+1. Il proprietario installa la 0.2.0 ed esegue **Esplora freni** da fermo (`README.md`), poi esporta il file.
+2. L'agente analizza la registrazione (identificativi che rispondono, byte che cambiano col pedale), la aggiunge ai
+   test e aggiorna `SIGNALS.md`.
+3. Si decide con il proprietario: mappa più ampia del mode 22, altre centraline (7E0, 7E3, 7E6) o prova in marcia per la
+   rigenerazione.

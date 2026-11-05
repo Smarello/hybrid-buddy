@@ -58,7 +58,9 @@ class ElmConnection(
         }
     }
 
+    /** @throws IllegalArgumentException for any command outside [ReadOnlyCommands], before anything is sent. */
     suspend fun execute(command: String, timeoutMs: Long): Exchange = mutex.withLock {
+        ReadOnlyCommands.requireAllowed(command)
         // Leftovers of a previous timed-out command must not be attributed to this one.
         while (incoming.tryReceive().isSuccess) { /* dropped */ }
         val startedAt = clock()

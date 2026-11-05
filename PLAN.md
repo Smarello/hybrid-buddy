@@ -5,8 +5,8 @@ Legenda: ✅ fatto e verificato · 🟡 fatto, prova sull'auto da eseguire · �
 | Fase | Contenuto | Criterio di completamento | Stato |
 |---|---|---|---|
 | 1. Progetto manutenibile | Kotlin/Compose, 4 componenti, replay, documenti | APK installabile, build e test verificati, documenti per riprendere | ✅ automatico (build + 23 test JVM) |
-| 2. Connessione e registrazioni | Scelta LX, permessi, comunicazione ordinata, timeout/errori, riconnessione, log, export, foreground service | APK che legge parametri base, esporta e recupera da una disconnessione; **prova da fermo sull'auto** | 🟡 codice e test automatici fatti; prova sull'auto da fare |
-| 3. Segnali essenziali | HV tensione/corrente, potenza termica, segnali freno, contesto | Matrice in `SIGNALS.md` con evidenze reali e registrazioni riutilizzabili | ⬜ |
+| 2. Connessione e registrazioni | Scelta LX, permessi, comunicazione ordinata, timeout/errori, riconnessione, log, export, foreground service | APK che legge parametri base, esporta e recupera da una disconnessione; **prova da fermo sull'auto** | 🟡 connessione reale confermata (0.1.1, 2026-11-05); stacco LX e schermo spento rinviati dal proprietario |
+| 3. Segnali essenziali | HV tensione/corrente, potenza termica, segnali freno, contesto | Matrice in `SIGNALS.md` con evidenze reali e registrazioni riutilizzabili | 🟡 primo passo (frenata): esplorazione guidata in 0.2.0, prova sull'auto da fare |
 | 4. Powermeter | Termico kW, batteria kW (negativo = carica, positivo = scarica) | Dati reali, test delle conversioni, confronto con riferimento indipendente | ⬜ |
 | 5. Indicatore frenata | Grigio / Verde / Rosso / Non disponibile | Classificazione riproducibile sulle registrazioni | ⬜ |
 | 6. MVP utilizzabile | Schermata principale, dati scaduti, frequenze (freno ≥ 5/s, potenze 2–5/s) | APK, sorgenti, istruzioni, rapporto verifiche | ⬜ |
@@ -25,8 +25,8 @@ documenta cosa manca. Solo batteria = prototipo parziale, non MVP.
 - Sorgenti, istruzioni di build e limiti conosciuti.
 
 ## Prove sull'auto (a cura del proprietario)
-1. **Connessione iniziale** (fase 2) — vedi `README.md`, sezione "Prova da fermo". ⬜
-2. Acquisizione dei segnali essenziali (fase 3). ⬜
+1. **Connessione iniziale** (fase 2) — vedi `README.md`, sezione "Prova da fermo". ✅ connessione (0.1.1); stacco LX e schermo spento rinviati
+2. Acquisizione dei segnali essenziali (fase 3). 🟡 **Esplorazione freni** da fermo (0.2.0) — `README.md`, sezione "Esplora freni"
 3. Verifica dei due indicatori (fasi 4–5). ⬜
 4. Collaudo finale (fase 6). ⬜
 

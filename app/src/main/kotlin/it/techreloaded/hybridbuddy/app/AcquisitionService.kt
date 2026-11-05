@@ -26,8 +26,9 @@ class AcquisitionService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        val exploring = intent.getBooleanExtra(EXTRA_EXPLORATION, false)
         try {
-            startForeground(NOTIFICATION_ID, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
+            startForeground(NOTIFICATION_ID, notification(exploring), ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
         } catch (e: SecurityException) {
             stopSelf()
             return START_NOT_STICKY
@@ -37,7 +38,8 @@ class AcquisitionService : Service() {
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "hybridbuddy:acquisition")
                 .apply { acquire() }
         }
-        AcquisitionController.startLive(this, address, intent.getStringExtra(EXTRA_NAME) ?: "OBDLink")
+        if (exploring) AcquisitionController.startExploration(this, address)
+        else AcquisitionController.startLive(this, address, intent.getStringExtra(EXTRA_NAME) ?: "OBDLink")
         return START_NOT_STICKY
     }
 
@@ -48,7 +50,7 @@ class AcquisitionService : Service() {
         super.onDestroy()
     }
 
-    private fun notification(): Notification {
+    private fun notification(exploring: Boolean): Notification {
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(NotificationChannel(CHANNEL, "Acquisizione", NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(
@@ -59,8 +61,8 @@ class AcquisitionService : Service() {
         )
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
-            .setContentTitle("Hybrid Buddy · acquisizione attiva")
-            .setContentText("Lettura dall'OBDLink LX in corso")
+            .setContentTitle(if (exploring) "Hybrid Buddy · esplorazione freni" else "Hybrid Buddy · acquisizione attiva")
+            .setContentText(if (exploring) "Mappa delle centraline in corso, sola lettura" else "Lettura dall'OBDLink LX in corso")
             .setContentIntent(open)
             .setOngoing(true)
             .addAction(Notification.Action.Builder(null, "Termina", stop).build())
@@ -73,10 +75,17 @@ class AcquisitionService : Service() {
         private const val ACTION_STOP = "stop"
         private const val EXTRA_ADDRESS = "address"
         private const val EXTRA_NAME = "name"
+        private const val EXTRA_EXPLORATION = "exploration"
 
         fun start(context: Context, address: String, name: String) {
             context.startForegroundService(
                 Intent(context, AcquisitionService::class.java).putExtra(EXTRA_ADDRESS, address).putExtra(EXTRA_NAME, name),
+            )
+        }
+
+        fun startExploration(context: Context, address: String) {
+            context.startForegroundService(
+                Intent(context, AcquisitionService::class.java).putExtra(EXTRA_ADDRESS, address).putExtra(EXTRA_EXPLORATION, true),
             )
         }
 

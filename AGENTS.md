@@ -26,14 +26,16 @@ python3 tools/generate_sample_recording.py                               # rigen
 | Collegamento OBDLink | `core/.../obdlink` | `AdapterLink` (byte), `ElmConnection` (un comando alla volta, prompt `>`, timeout, errori) |
 | Definizioni dei segnali | `core/.../signals` | `SignalDefinition`, `BaseSignals` (PID OBD-II standard), parser mode 01 |
 | Interpretazione | `core/.../interpretation` | valore / "Non disponibile", scadenza dei dati, catena Telefono→LX→Auto→Segnali |
-| Sessione e registrazioni | `core/.../session` | `AcquisitionSession` (connessione, init, polling, riconnessione), JSONL, `ReplayConnector` |
+| Sessione e registrazioni | `core/.../session` | `AcquisitionSession` (connessione, init, polling, riconnessione), JSONL, `ReplayConnector`, mascheramento VIN |
+| Esplorazione segnali | `core/.../exploration` | `BrakeExploration` (mappa mode 21/22 per centralina, fasi del pedale, riepilogo); risposte multi-frame con `IsoTp` |
 | Interfaccia e Android | `app/` | Compose, foreground service, Bluetooth SPP, esportazione via FileProvider |
 
 `core` è Kotlin/JVM puro: tutto ciò che non tocca Android si testa lì, senza telefono né auto.
 
 ## Vincoli
 - **Sola lettura**: solo comandi AT/ST di configurazione dell'adattatore e richieste diagnostiche di lettura. Mai comandi
-  che scrivono, cancellano errori, attivano attuatori o modificano centraline.
+  che scrivono, cancellano errori, attivano attuatori o modificano centraline. `ReadOnlyCommands` (lista dei consentiti)
+  lo impone in `ElmConnection`: un nuovo comando va aggiunto lì, con test e decisione in `DECISIONS.md`.
 - **Mai richiedere il VIN** (`0902`) né registrare indirizzo MAC o nome del telefono: un test lo verifica.
 - Un dato mancante, in errore o scaduto si mostra come **"Non disponibile"** con la causa, mai come zero o ultimo valore.
 - Dati simulati sempre marcati (`"source":"simulated"` nell'intestazione, bollino "SIMULATA" in app). Non dimostrano

@@ -57,7 +57,7 @@ data class Timeouts(
 /**
  * Acquisition loop: connect, initialize the adapter, poll [signals] in turn, record every
  * exchange, and reconnect with backoff whenever the link is lost. Runs until cancelled or,
- * for a replay, until the recording ends. Read-only: only AT/ST setup and mode 01 requests are sent.
+ * for a replay, until the recording ends. Read-only: only AT/ST setup and mode 01 requests are sent (enforced by ReadOnlyCommands).
  */
 class AcquisitionSession(
     source: SessionSource,
@@ -115,15 +115,8 @@ class AcquisitionSession(
 
     private suspend fun initialize(connection: ElmConnection) {
         consecutiveTimeouts = 0
-        execute(connection, "ATZ", timeouts.resetMs)
-        for (command in listOf("ATE0", "ATL0", "ATH1", "ATSP0")) execute(connection, command, timeouts.atCommandMs)
-        val identity = listOf("ATI", "STI").mapNotNull { command ->
-            execute(connection, command, timeouts.atCommandMs).takeIf { it.error == null }?.lines?.firstOrNull()
-        }
-        mutableState.update { it.copy(adapterIdentity = identity.joinToString(" · ").ifEmpty { null }) }
-        execute(connection, "0100", timeouts.firstObdRequestMs)
-        val protocol = execute(connection, "ATDP", timeouts.atCommandMs)
-        mutableState.update { it.copy(protocol = protocol.lines.firstOrNull().takeIf { protocol.error == null }) }
+        val (identity, protocol) = initializeAdapter(timeouts) { command, timeout -> execute(connection, command, timeout) }
+        mutableState.update { it.copy(adapterIdentity = identity, protocol = protocol) }
     }
 
     private suspend fun poll(connection: ElmConnection) {
@@ -159,4 +152,23 @@ class AcquisitionSession(
 
     private fun backoff(failures: Int): Long =
         (timeouts.reconnectBaseDelayMs shl failures.coerceAtMost(4)).coerceAtMost(timeouts.reconnectMaxDelayMs)
+}
+
+/**
+ * Adapter setup shared by acquisition and exploration (D-004): reset, echo/linefeeds off, CAN headers on,
+ * automatic protocol, identification, first OBD request (protocol search), protocol read-back.
+ * @return adapter identity and protocol, null when unknown.
+ */
+internal suspend fun initializeAdapter(
+    timeouts: Timeouts,
+    execute: suspend (command: String, timeoutMs: Long) -> Exchange,
+): Pair<String?, String?> {
+    execute("ATZ", timeouts.resetMs)
+    for (command in listOf("ATE0", "ATL0", "ATH1", "ATSP0")) execute(command, timeouts.atCommandMs)
+    val identity = listOf("ATI", "STI").mapNotNull { command ->
+        execute(command, timeouts.atCommandMs).takeIf { it.error == null }?.lines?.firstOrNull()
+    }
+    execute("0100", timeouts.firstObdRequestMs)
+    val protocol = execute("ATDP", timeouts.atCommandMs)
+    return identity.joinToString(" · ").ifEmpty { null } to protocol.lines.firstOrNull().takeIf { protocol.error == null }
 }
