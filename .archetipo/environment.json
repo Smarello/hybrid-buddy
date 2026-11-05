@@ -26,15 +26,39 @@
     }
   ],
   "checks": {
-    "build-and-test": {
-      "name": "build-and-test",
+    "android-lint": {
+      "name": "android-lint",
       "argv": [
         "scripts/archetipo/toolchain.sh",
         "run",
         "./gradlew",
         "--no-daemon",
         "--console=plain",
-        ":core:test",
+        ":app:lintDebug"
+      ],
+      "timeout_seconds": 1500,
+      "inputs": [
+        "scripts/archetipo/toolchain.sh",
+        "settings.gradle.kts",
+        "build.gradle.kts",
+        "gradle.properties",
+        "gradle",
+        "gradlew",
+        "core/build.gradle.kts",
+        "core/src",
+        "app/build.gradle.kts",
+        "app/src"
+      ],
+      "cache": true
+    },
+    "assemble-debug": {
+      "name": "assemble-debug",
+      "argv": [
+        "scripts/archetipo/toolchain.sh",
+        "run",
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
         "assembleDebug"
       ],
       "timeout_seconds": 1500,
@@ -49,6 +73,32 @@
         "core/src",
         "app/build.gradle.kts",
         "app/src"
+      ],
+      "cache": true
+    },
+    "core-unit-tests": {
+      "name": "core-unit-tests",
+      "argv": [
+        "scripts/archetipo/toolchain.sh",
+        "run",
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        ":core:test",
+        "--rerun"
+      ],
+      "timeout_seconds": 1200,
+      "inputs": [
+        "scripts/archetipo/toolchain.sh",
+        "settings.gradle.kts",
+        "build.gradle.kts",
+        "gradle.properties",
+        "gradle",
+        "gradlew",
+        "core/build.gradle.kts",
+        "core/src",
+        "app/build.gradle.kts",
+        "app/src/main/assets/sample-simulated.jsonl"
       ],
       "cache": true
     }
