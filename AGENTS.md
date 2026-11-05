@@ -51,3 +51,26 @@ python3 tools/generate_sample_recording.py                               # rigen
 - Le registrazioni reali ricevute dal proprietario diventano casi di test permanenti (in `core/src/test/resources/`).
 - Raggruppa le richieste di prove sull'auto (connessione; segnali essenziali; due indicatori; collaudo finale).
 - Registra le decisioni in `DECISIONS.md` con la motivazione e le fonti.
+
+## Funzioni già presenti in Hybrid Assistant
+Prima di progettare una funzione che Hybrid Assistant (`priusfan.info.bthsd10`) ha già (HyBall, potenze, temperature,
+SOC, ventola, storico frenate, …), ricostruisci come la fa **con rea**, in sola analisi statica. Non partire da
+ipotesi, forum o PID generici.
+
+1. Parti da `docs/hybrid-assistant-hyball-analisi.md` (sequencer, centraline, byte, evidence id) e da
+   `docs/hybrid-assistant-stringhe-obd-decifrate.json` (comandi OBD decifrati). Riusa le evidenze che coprono già la funzione.
+2. Per il resto usa l'MCP `rea` (skill `reverse-engineer-anything`) su `docs/priusfan.info.bthsd10.apk`: classi
+   `scanner` (richieste e decodifica), `carstate` (logica), `cartype` (ramo per modello: per la Yaris `_car_yarismy20`,
+   sequencer `g4n`, batteria Li-ion), `dash` (UI). Segui il ramo Yaris MY20, non quello di altri modelli.
+   Se l'MCP non risponde, usa la CLI `rea inspect-android-class|inspect-android-method|trace-android-references`
+   con `REA_JADX_MCP_JAR=$HOME/.local/share/rea/android/jadx-headless-mcp-0.7.1-all.jar` e
+   `JAVA_HOME=$HOME/.cache/archetipo/toolchains/jdk-21.0.13+9/Contents/Home`.
+   L'APK, la skill e la registrazione MCP sono locali e fuori da git: se mancano, chiedili al proprietario.
+3. Nomi B4A offuscati (`_` + N volte `v` + cifra) superano i 255 caratteri: non usarli come nomi di file; nel testo
+   scrivili `_vN_d`. Le stringhe dei comandi sono cifrate con `main.vvv13` (vedi §1 del documento).
+4. Aggiorna il documento separando **confermato da rea** (con evidence id), **corretto** e **ipotesi**; i segnali
+   trovati entrano in `SIGNALS.md` come **candidato** (ciò che fa Hybrid Assistant non prova nulla sulla Yaris 2026).
+5. I comandi che Hybrid Assistant usa ma che non sono letture pure (`10xx`, `2C`, `31`, `3E`, `2F`, …) restano esclusi:
+   prima tenta le letture `22` dei DID sorgente; un'eccezione richiede una decisione in `DECISIONS.md`. `2F`
+   (attuatori) mai.
+6. Mai eseguire l'APK di Hybrid Assistant né usare strumenti runtime (adb, Frida) su di esso.

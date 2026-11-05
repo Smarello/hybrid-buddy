@@ -4,3 +4,7 @@ local.properties
 .idea/
 *.iml
 .kotlin/
+docs/*.xapk
+docs/*.apk
+.claude/skills/reverse-engineer-anything
+.DS_Store

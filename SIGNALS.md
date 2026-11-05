@@ -71,6 +71,31 @@ marcia: nell'impianto Toyota la richiesta del conducente (corsa del pedale, `221
 attrito (pressione alle ruote, `221022`), quindi una richiesta alta con pressione bassa indicherebbe rigenerazione.
 È un'ipotesi da verificare, non un segnale validato.
 
+## Candidati da Hybrid Assistant (analisi statica, ramo "Yaris MY20")
+
+Fonte: decompilazione di Hybrid Assistant 3.322.0 ricontrollata con rea (`docs/hybrid-assistant-hyball-analisi.md`,
+§4a e §8). L'app li ottiene tramite DID dinamici (`2C01` + `22F301`), che Hybrid Buddy non può inviare; qui sono
+riportati come **letture dirette** `22` dei DID sorgente, mai provate sulla Yaris 2026. Byte numerati dal primo byte
+dopo `62 DID DID`. Centralina **7D2 → 7DA** (ibrida, mai interrogata finora: l'esplorazione 0.2.x ha provato 7E2) e
+**747 → 74F** (batteria Li-ion).
+
+| Segnale | Centralina | Richiesta | Byte | Conversione | Unità | Fonte | Prove | Stato |
+|---|---|---|---|---|---|---|---|---|
+| Coppia richiesta dal freno (`brake_mastcyl_trq`) | 7D2 | `221067` | b1-b2 | (raw−32768)/8 | Nm (≤ 0 in frenata) | HA `scanner._v243_3` | nessuna | candidato |
+| Coppia rigenerativa (`brake_regen_trq`) | 7D2 | `221069` | b3-b4 | (raw−32768)/8 | Nm (≤ 0 in frenata) | HA `scanner._v243_3` | nessuna | candidato |
+| Pedale acceleratore (dall'uso) | 7D2 | `221060` | b1 | raw/2 | % | HA | nessuna | candidato |
+| Giri / coppia MG1 | 7D2 | `2210A0` | b1-b2 / b7-b8 | raw−32768 / (raw−32768)/8 | rpm / Nm | HA (anche lettura diretta nel sequencer `china`) | nessuna | candidato |
+| Giri / coppia MG2 | 7D2 | `2210A1` | b1-b2 / b7-b8 | raw−32768 / (raw−32768)/8 | rpm / Nm | HA (idem) | nessuna | candidato |
+| Tensione HV | 747 (Li-ion) o 7D2 | `221F9A` | b3-b4 | raw/64 | V | HA | nessuna | candidato |
+| Corrente HV | 747 o 7D2 | `221F9A` | b5-b6 | DDDI: 12 bit con segno (`b5 & 0x0F`)/10; lettura diretta in HA: (raw−32768)/10 | A (< 0 in carica, **ipotesi**) | HA (due forme nel codice) | nessuna | candidato |
+| Limite di carica / scarica (dall'uso) | 747 o 7D2 | `221807` | b1-b2 / b3-b4 | (raw−32768)/100 | kW | HA | nessuna | candidato |
+| SOC batteria | 747 o 7D2 | `221F5B` | b1 | raw/2.55 | % | HA | nessuna | candidato |
+
+Formula di Hybrid Assistant (ramo Yaris): frenata se `M < 0 o R < 0`; attrito se `M − R < 0`; quota d'attrito
+`(M − R)·100/M`; campioni validi sopra 15 km/h (`010D`). Le richieste sono già ammesse da `ReadOnlyCommands`
+(`ATSH 7D2`, `ATCRA 7DA`, `22xxxx`); non sappiamo se la centralina le accetta senza sessione estesa e DID dinamici
+(decisione aperta in §8 del documento).
+
 ## Fonti
 - OBDLink Family Reference and Programming Manual (FRPM): https://www.scantool.net/scantool/downloads/682/obdlink_frpm_f.pdf
 - SAE J1979 / ISO 15031-5 (PID standard mode 01).
@@ -78,3 +103,4 @@ attrito (pressione alle ruote, `221022`), quindi una richiesta alta con pression
 - Gen 2 Prius PIDs (Oguchi): https://www.oguchi-rd.com/Accomplishment/Automobile/07%20Toyota%20Prius/Parameter%20IDs/Toyota%20Gen%202%20Prius%20PIDs.pdf
 - GR Yaris, reverse engineering PIDs: https://www.gr-yaris.co.uk/threads/reverse-engineering-pids.4680/
 - Segnali ibridi Toyota interrogabili (mode 21 → 22, indirizzi): https://github.com/jwu02/esp32-car-telemetry/issues/9
+- Hybrid Assistant 3.322.0 (`priusfan.info.bthsd10`), analisi statica con jadx/apktool e rea 6.8.0: `docs/hybrid-assistant-hyball-analisi.md`.
