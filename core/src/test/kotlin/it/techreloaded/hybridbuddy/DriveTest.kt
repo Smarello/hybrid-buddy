@@ -1,6 +1,8 @@
 package it.techreloaded.hybridbuddy
 
 import it.techreloaded.hybridbuddy.interpretation.BrakeIndicator
+import it.techreloaded.hybridbuddy.interpretation.DriveState
+import it.techreloaded.hybridbuddy.interpretation.EngineState
 import it.techreloaded.hybridbuddy.interpretation.Fresh
 import it.techreloaded.hybridbuddy.interpretation.LinkLevel
 import it.techreloaded.hybridbuddy.interpretation.batteryPowerKw
@@ -120,6 +122,20 @@ class DriveTest {
             brakeIndicator(state(m to 0.0, r to 0.0, speed to 60.0, pedal to 0.0, rpm to 1500.0), now),
         )
         assertEquals(BrakeIndicator.Unavailable("rilascio: 747: in attesa · 7D2: in attesa"), brakeIndicator(state(*coasting), now))
+    }
+
+    @Test
+    fun `the engine tile follows the engine icon of Hybrid Assistant`() {
+        val rpm = DriveSignals.engineSpeed
+        val torque = DriveSignals.engineTorque
+        assertEquals(EngineState.OFF, DriveState(state(rpm to 0.0), now).engineState)
+        assertEquals(EngineState.OFF, DriveState(state(rpm to 799.0, torque to -20.0), now).engineState)
+        assertEquals(EngineState.RUNNING, DriveState(state(rpm to 1500.0, torque to 60.0), now).engineState)
+        assertEquals(EngineState.SPINNING, DriveState(state(rpm to 1500.0, torque to -20.0), now).engineState)
+        // Running or spinning cannot be told apart without the torque; EV needs only the rpm.
+        assertEquals(null, DriveState(state(rpm to 1500.0), now).engineState)
+        assertEquals(false, DriveState(state(rpm to 1500.0), now).electricOnly)
+        assertEquals(null, DriveState(state(torque to 60.0), now).electricOnly)
     }
 
     @Test

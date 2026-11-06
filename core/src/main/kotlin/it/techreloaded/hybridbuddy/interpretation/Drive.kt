@@ -81,6 +81,14 @@ class DriveState(state: SessionState, nowEpochMs: Long) {
         is Fresh.Value -> if (rpm.value < DriveSignals.EV_MAX_RPM) true else engineTorque.test { it < 0 }
     }
     val regenerating: Boolean? = batteryPower.test { it < 0 }
+    /** EV of `carstate`: engine rpm below [DriveSignals.EV_MAX_RPM]; null without the rpm. */
+    val electricOnly: Boolean? = engineRpm.test { it < DriveSignals.EV_MAX_RPM }
+    /** Engine icon of the Hybrid Assistant dashboard (user guide §8.1); null when a signal it needs is missing. */
+    val engineState: EngineState? = when (electricOnly) {
+        null -> null
+        true -> EngineState.OFF
+        false -> engineTorque.test { it < 0 }?.let { spinning -> if (spinning) EngineState.SPINNING else EngineState.RUNNING }
+    }
     /** min(1, |P / charge limit|)·100; null when power or limit is missing. */
     val regenIntensityPercent: Int? =
         if (batteryPower is Fresh.Value && chargeLimit is Fresh.Value) {
@@ -119,6 +127,9 @@ class DriveState(state: SessionState, nowEpochMs: Long) {
 
     private fun Fresh.test(test: (Double) -> Boolean): Boolean? = (this as? Fresh.Value)?.let { test(it.value) }
 }
+
+/** Grey engine stopped, green running, yellow spinning without fuel (dragged or engine braking), as Hybrid Assistant colours it. */
+enum class EngineState { OFF, RUNNING, SPINNING }
 
 fun brakeIndicator(state: SessionState, nowEpochMs: Long): BrakeIndicator {
     val car = DriveState(state, nowEpochMs)

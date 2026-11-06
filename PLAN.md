@@ -9,7 +9,7 @@ Legenda: ✅ fatto e verificato · 🟡 fatto, prova sull'auto da eseguire · �
 | 3. Segnali essenziali | HV tensione/corrente, potenza termica, segnali freno, contesto | Matrice in `SIGNALS.md` con evidenze reali e registrazioni riutilizzabili | 🟡 primo passo (frenata): esplorazione guidata (0.2.1 con conferma prima del pedale); mappa eseguita sull'auto, fasi del pedale da ripetere |
 | 4. Powermeter | Termico kW, batteria kW (negativo = carica, positivo = scarica) | Dati reali, test delle conversioni, confronto con riferimento indipendente | 🟡 Guida 0.3.2: prima guida fatta (2026-11-05), 747/7D2/700 rispondono, corrente HV confermata (D-024); seconda guida da fare |
 | 5. Indicatore frenata | Grigio / Verde / Rosso / Non disponibile | Classificazione riproducibile sulle registrazioni | 🟡 Guida 0.3.2: prima guida registrata come test; velocità ora via 7DF (D-023); aperta la rigenerazione senza pedale (`STATUS.md`); seconda guida da fare |
-| 6. MVP utilizzabile | Schermata principale, dati scaduti, frequenze (freno ≥ 5/s, potenze 2–5/s) | APK, sorgenti, istruzioni, rapporto verifiche | ⬜ |
+| 6. MVP utilizzabile | Schermata principale, dati scaduti, frequenze (freno ≥ 5/s, potenze 2–5/s) | APK, sorgenti, istruzioni, rapporto verifiche | 🟡 schermata principale = cruscotto di Hybrid Assistant (0.4.0, D-027), da provare sull'auto |
 
 **Punto di decisione (fase 3):** se mancano dati attendibili per potenza termica o frenata, la fase resta aperta e si
 documenta cosa manca. Solo batteria = prototipo parziale, non MVP.

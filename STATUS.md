@@ -1,8 +1,16 @@
 # STATUS.md
 
-**Aggiornato:** 2026-11-05 · versione app 0.3.2
+**Aggiornato:** 2026-11-06 · versione app 0.4.0
 
 ## Ultimo risultato verificato
+- **0.4.0 — schermata principale = cruscotto di Hybrid Assistant** (D-027): stessa griglia della figura 8.1 del manuale
+  utente (`docs/HA-User-Guide - v1.1r - 20170204.pdf`, §8.1), in landscape. Attivi: velocità, freno (anello della 0.3.x),
+  EV, powermeter a barre (termico, batteria con tacca del limite di carica), termico (giri e stato: spento / acceso /
+  trascinato, nuovo `DriveState.engineState` con test). Grigi «in arrivo»: consumo, temperature, batteria HV (temperatura,
+  ventola, % di carica), viaggio, storico frenate e consumi, Check. La vecchia schermata principale è «Debug e prove» (🔧).
+  Al lancio l'app si collega da sola come HA. Verificato automaticamente (52 test JVM), build, APK installato sul Galaxy A34
+  e controllato con screenshot (2026-11-06): riquadri leggibili in landscape senza LX e con la guida simulata (anello,
+  EV, barre, termico, barra delle centraline). **Non verificato**: tutto ciò che la 0.3.2 lasciava da provare sull'auto (sotto).
 - **0.3.2 — stati di guida e «Rilascio»** (D-026): `DriveState` deriva a ogni valutazione gli stati di `carstate` di Hybrid
   Assistant (EV, termico trascinato o spento, in movimento, frenata, attrito, rilascio) dai segnali freschi; l'anello
   mostra in verde anche la rigenerazione al rilascio dell'acceleratore (potenza batteria < 0 con `221060` = 0, velocità
@@ -31,5 +39,5 @@ anche con barra CHG piena) e quote d'attrito piccole (M − R di pochi Nm): con 
 rosso in quei momenti; da confrontare col cruscotto.
 
 ## Prossimo passo
-**Seconda guida con la 0.3.2** (`README.md`, sezione "Guida"): da fermo la riga delle centraline deve dare Auto verde; poi
+**Seconda guida con la 0.4.0** (`README.md`, sezione "Cruscotto"): da fermo la barra in basso deve dare Auto verde; poi
 rilasci dell'acceleratore (atteso «Rilascio» verde) e frenate leggere e decise sopra i 15 km/h; esportare `guida-….jsonl`.

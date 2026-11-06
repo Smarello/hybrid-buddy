@@ -35,24 +35,34 @@ Sola lettura: l'app può inviare solo richieste di lettura (mode 01/21/22); ogni
 6. Per riprovare: **↻ Ripeti solo il pedale** usa la mappa completata più recente salvata sul telefono (anche quelle
    della 0.2.0), circa 1 minuto; **Rifai tutto** rifà anche la mappa.
 
-## Guida (fase 4–5, prima prova in marcia)
-Sola lettura, come sempre. Schermata **Guida** dalla schermata principale: un disco del freno con un anello che si
-riempie (vuoto e grigio = nessuna frenata; verde = solo rigenerativa, in proporzione al limite di carica, con l'etichetta
-«Rilascio» quando viene dal solo rilascio dell'acceleratore; rosso = interviene l'attrito, in proporzione alla quota
-d'attrito, scritta sotto il disco) e le potenze del **termico** e della **batteria** (negativa = in carica). Sotto 15 km/h
-l'attrito per fermarsi non viene contato. Un dato mancante mostra «Non disponibile»
-con la causa (es. «7D2: rifiuta 221067 (7F 22 31)»). Lo schermo resta acceso.
-1. LX inserito e già scelto con **Dispositivo**. Apri **Guida**: l'acquisizione parte da sola (o **▶ Avvia**).
-2. Guarda la riga in alto (LX, Auto, 7D2, 747, 700): verde = la centralina risponde, ✖ rossa = rifiuta o non risponde.
-   Già da fermo in READY si vede se le letture dirette sono accettate.
-3. Guida normalmente e fai alcune frenate **sopra i 15 km/h**: qualche leggera (dovrebbe restare verde) e qualcuna decisa.
-   Annota a voce o a memoria le frenate e cosa ha mostrato l'anello.
-4. **■ Ferma** → **Esporta guida** → condividi il file `guida-….jsonl` con lo sviluppatore.
-**Simulazione (SIMULATA)** mostra la schermata con un'auto inventata (bollino SIMULATA): non dimostra nulla sulla Yaris.
+## Cruscotto (fasi 4–5, prove in marcia)
+Sola lettura, come sempre. La schermata principale (in landscape) ha la struttura del cruscotto di Hybrid Assistant
+(manuale utente v1.1, §8.1): stessi riquadri, nelle stesse posizioni. Quelli grigi con «in arrivo» (consumo, temperature,
+batteria HV, viaggio, % di carica, Check) aspettano segnali non ancora letti e non mostrano mai valori finti. Quelli attivi:
+- **Velocità** (km/h, da `010D`).
+- **Freno**: un disco con un anello che si riempie (vuoto e grigio = nessuna frenata; verde = solo rigenerativa, in
+  proporzione al limite di carica, con l'etichetta «Rilascio» quando viene dal solo rilascio dell'acceleratore; rosso =
+  interviene l'attrito, in proporzione alla quota d'attrito, scritta sotto il disco). Sotto 15 km/h l'attrito per fermarsi
+  non viene contato. I 5 riquadri dello storico delle frenate sono grigi (in arrivo).
+- **EV**: giallo quando il termico è sotto gli 800 giri (solo elettrico), grigio quando è in uso.
+- **Powermeter**: barra del **termico** (dal basso, fondo scala 67 kW) e della **batteria** (dal centro: in alto scarica,
+  in basso carica in verde, fondo scala 30 kW, tacca verde = limite di carica), con i kW sotto (batteria negativa = in carica).
+- **Termico**: giri, grigio spento / verde acceso / giallo trascinato senza carburante.
+- Barra in basso: «Yaris» verde con le centraline (LX, Auto, 7D2, 747, 700: verde = risponde, ✖ rossa = rifiuta o non
+  risponde), letture del freno al secondo, bollino LIVE / SIMULATA / REPLAY, 🔧 = **Debug e prove**, **▶ Avvia** / **■ Ferma**.
 
-## Replay
-**Apri registrazione** → "Esempio SIMULATO" (dati inventati, non dell'auto) o "Da file…" per una sessione esportata.
-In replay il bollino in alto e la riga "Sorgente: … (non è l'auto)" lo segnalano sempre.
+Un dato mancante mostra «Non disponibile» con la causa (es. «7D2: rifiuta 221067 (7F 22 31)»). Lo schermo resta acceso.
+1. LX inserito. Apri l'app: si collega da sola all'LX già scelto (la prima volta **▶ Avvia** chiede quale).
+2. Già da fermo in READY la barra in basso dice se le letture dirette sono accettate.
+3. Guida normalmente: rilasci dell'acceleratore (atteso «Rilascio» verde) e frenate **sopra i 15 km/h**, leggere (verde)
+   e decise. Annota a voce o a memoria le frenate e cosa ha mostrato l'anello.
+4. **■ Ferma** → 🔧 → **Esporta guida** → condividi il file `guida-….jsonl` con lo sviluppatore.
+
+## Debug e prove (🔧)
+Catena Telefono → LX → Auto → Segnali, parametri OBD standard, ultimi scambi, **Dispositivo**, **Avvia acquisizione** (sessione
+di base), **Esporta sessione** / **Esporta guida**, **Esplora freni**, **Guida simulata (SIMULATA)** (auto inventata, bollino
+SIMULATA: non dimostra nulla sulla Yaris) e **Apri registrazione** → "Esempio SIMULATO" o "Da file…" per una registrazione
+esportata (una `guida-…` si apre nel cruscotto). In replay il bollino lo segnala sempre.
 
 ## Limiti conosciuti
 - Guida: i segnali vengono da Hybrid Assistant (Yaris MY20); dalla prima guida (2026-11-05) 7D2, 747 e 700 rispondono e la

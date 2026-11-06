@@ -92,7 +92,7 @@ private const val SAMPLE_ASSET = "sample-simulated.jsonl"
 private const val VISIBLE_EXCHANGES = 8
 private val exchangeTime = DateTimeFormatter.ofPattern("HH:mm:ss.SSS").withZone(ZoneId.systemDefault())
 
-private enum class Screen { DIAGNOSTICS, EXPLORATION, DRIVE }
+private enum class Screen { DASHBOARD, DIAGNOSTICS, EXPLORATION }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,21 +102,20 @@ class MainActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize()) {
                     var screen by rememberSaveable {
                         mutableStateOf(
-                            when {
-                                AcquisitionController.isExplorationRunning -> Screen.EXPLORATION
-                                AcquisitionController.isRunning && AcquisitionController.isDrive(AcquisitionController.session.value) -> Screen.DRIVE
-                                else -> Screen.DIAGNOSTICS
-                            },
+                            if (AcquisitionController.isExplorationRunning) Screen.EXPLORATION else Screen.DASHBOARD,
                         )
                     }
-                    if (screen != Screen.DIAGNOSTICS) BackHandler { screen = Screen.DIAGNOSTICS }
+                    // Dashboard ← debug (diagnostics and tests) ← brake exploration.
                     when (screen) {
-                        Screen.EXPLORATION -> BrakeExplorationScreen(onBack = { screen = Screen.DIAGNOSTICS })
-                        Screen.DRIVE -> DriveScreen(onBack = { screen = Screen.DIAGNOSTICS })
-                        Screen.DIAGNOSTICS -> DiagnosticsScreen(
-                            onExploreBrakes = { screen = Screen.EXPLORATION },
-                            onDrive = { screen = Screen.DRIVE },
-                        )
+                        Screen.DASHBOARD -> DashboardScreen(onDebug = { screen = Screen.DIAGNOSTICS })
+                        Screen.DIAGNOSTICS -> {
+                            BackHandler { screen = Screen.DASHBOARD }
+                            DiagnosticsScreen(onBack = { screen = Screen.DASHBOARD }, onExploreBrakes = { screen = Screen.EXPLORATION })
+                        }
+                        Screen.EXPLORATION -> {
+                            BackHandler { screen = Screen.DIAGNOSTICS }
+                            BrakeExplorationScreen(onBack = { screen = Screen.DIAGNOSTICS })
+                        }
                     }
                 }
             }
@@ -124,8 +123,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/** Debug and test mode: connection chain, standard OBD parameters, exchange log, replays, exports and the brake exploration. */
 @Composable
-private fun DiagnosticsScreen(onExploreBrakes: () -> Unit, onDrive: () -> Unit) {
+private fun DiagnosticsScreen(onBack: () -> Unit, onExploreBrakes: () -> Unit) {
     val context = LocalContext.current
     val preferences = remember { context.getSharedPreferences("adapter", Context.MODE_PRIVATE) }
     var adapterAddress by remember { mutableStateOf(preferences.getString("address", null)) }
@@ -168,7 +168,11 @@ private fun DiagnosticsScreen(onExploreBrakes: () -> Unit, onDrive: () -> Unit) 
     }
 
     val openRecording = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) startReplay(context, displayName(context, uri)) { context.contentResolver.openInputStream(uri)!! }
+        if (uri != null) {
+            startReplay(context, displayName(context, uri)) { context.contentResolver.openInputStream(uri)!! }
+            // A drive recording is shown by the dashboard.
+            if (AcquisitionController.isDrive(AcquisitionController.session.value)) onBack()
+        }
     }
 
     val current = session
@@ -179,7 +183,7 @@ private fun DiagnosticsScreen(onExploreBrakes: () -> Unit, onDrive: () -> Unit) 
         Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Header(state?.source)
+        Header(state?.source, onBack)
         ChainCard(current, state, now)
         DetailLine(state)
         SectionLabel("Parametri di base (OBD standard)")
@@ -201,11 +205,16 @@ private fun DiagnosticsScreen(onExploreBrakes: () -> Unit, onDrive: () -> Unit) 
                 Button(onClick = { startAfterChoice = true; withBluetoothPermission(::startLive) }) { Text("▶ Avvia acquisizione") }
             }
             OutlinedButton(onClick = { exportLatest(context, AcquisitionController.SESSION_PREFIX) }) { Text("Esporta sessione") }
+            OutlinedButton(onClick = { exportLatest(context, AcquisitionController.DRIVE_PREFIX) }) { Text("Esporta guida") }
             OutlinedButton(onClick = { startAfterChoice = false; withBluetoothPermission { choosingDevice = true } }) {
                 Text("Dispositivo")
             }
-            Button(onClick = onDrive) { Text("Guida") }
             OutlinedButton(onClick = onExploreBrakes) { Text("Esplora freni") }
+            OutlinedButton(onClick = {
+                AcquisitionService.stop(context)
+                AcquisitionController.startSimulatedDrive()
+                onBack()
+            }) { Text("Guida simulata (SIMULATA)") }
             ReplayMenu(
                 onSample = { startReplay(context, "$SAMPLE_ASSET (SIMULATA)") { context.assets.open(SAMPLE_ASSET) } },
                 onFile = { openRecording.launch(arrayOf("*/*")) },
@@ -232,14 +241,15 @@ private fun DiagnosticsScreen(onExploreBrakes: () -> Unit, onDrive: () -> Unit) 
 }
 
 @Composable
-private fun Header(source: SessionSource?) {
+private fun Header(source: SessionSource?, onBack: () -> Unit) {
     val (chip, chipColor) = when (source) {
         null -> "NESSUNA SORGENTE" to Grey
         is SessionSource.Live -> "LIVE · ${source.adapterName}" to Green
         is SessionSource.Replay -> (if (source.simulated) "REPLAY · SIMULATA" else "REPLAY · dati registrati") to Amber
     }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text("Hybrid Buddy", fontSize = 22.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+        TextButton(onClick = onBack) { Text("←", fontSize = 20.sp, color = Grey) }
+        Text("Debug e prove", fontSize = 22.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
         Text(
             chip, color = chipColor, fontSize = 12.sp,
             modifier = Modifier.background(Color(0xFF2A2F36), RoundedCornerShape(12.dp)).padding(horizontal = 10.dp, vertical = 4.dp),
@@ -348,7 +358,7 @@ private fun ReplayMenu(onSample: () -> Unit, onFile: () -> Unit) {
 
 @SuppressLint("MissingPermission") // only shown after BLUETOOTH_CONNECT is granted
 @Composable
-private fun DevicePicker(onChosen: (address: String, name: String) -> Unit, onDismiss: () -> Unit) {
+internal fun DevicePicker(onChosen: (address: String, name: String) -> Unit, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val devices = remember {
         runCatching { context.getSystemService(BluetoothManager::class.java)?.adapter?.bondedDevices.orEmpty() }
