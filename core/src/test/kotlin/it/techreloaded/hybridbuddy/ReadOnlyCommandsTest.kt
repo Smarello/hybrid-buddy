@@ -16,13 +16,14 @@ class ReadOnlyCommandsTest {
         listOf(
             "ATZ", "ATE0", "ATL0", "ATH1", "ATSP0", "ATI", "STI", "ATDP", "ATRV", "0100", "010C",
             "ATSH 7E2", "ATCRA 7EA", "ATFCSH 7B0", "ATFCSD 30 00 00", "ATFCSM 1", "21C3", "2100", "221043", "221FFF",
+            "2210671069",
         ).forEach { assertTrue(ReadOnlyCommands.isAllowed(it), it) }
     }
 
     @Test
     fun `refuses writes, resets, DTC clear, sessions, security access, VIN and arbitrary frames`() {
         listOf(
-            "04", "0902", "1101", "1003", "2701", "2E1001AA", "3101FF00", "3E00", "14FFFFFF", "22F190", "22F18C",
+            "04", "0902", "1101", "1003", "2701", "2E1001AA", "3101FF00", "3E00", "14FFFFFF", "22F190", "22F18C", "221067F190", "22F1901067", "221067106910A0", "2210671",
             "2210", "21C3 01", "STPX H:7E2, D:1101", "ATMA", "ATWM 81 10 F1 3E", "ATSH 7E2 ; 04",
         ).forEach { assertFalse(ReadOnlyCommands.isAllowed(it), it) }
     }

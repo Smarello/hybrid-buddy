@@ -103,6 +103,7 @@ private const val NOT_STARTED = "non avviato"
  * Main screen, laid out as the Hybrid Assistant dashboard (user guide v1.1, §8.1, figure 8.1): speed, brake, temperatures and
  * power meter on top; consumption, battery temperature; EV, trip, engine and state of charge; bottom bar with the car and
  * the settings (here: the debug mode). A tile whose signals Hybrid Buddy does not read yet is greyed out, never faked.
+ * A missing value is a yellow triangle only when a read failed; while awaited or late it is a grey dash (0.4.1).
  */
 @Composable
 internal fun DashboardScreen(onDebug: () -> Unit) {
@@ -211,7 +212,21 @@ private fun FutureTile(title: String, detail: String, modifier: Modifier) = Tile
 @Composable
 private fun Caption(text: String, modifier: Modifier = Modifier) = Text(text.uppercase(), color = Grey, fontSize = 10.sp, letterSpacing = 1.sp, modifier = modifier)
 
-/** Yellow triangle in place of a missing value (never zero, never the last value); a tap shows the cause. */
+/**
+ * In place of a missing value (never zero, never the last value); a tap shows the cause. A failed read is a yellow
+ * triangle; a value still awaited or expired without errors is a grey dash, so a slow round raises no alarm.
+ */
+@Composable
+private fun MissingValue(missing: Fresh?, modifier: Modifier = Modifier) {
+    val cause = missing as? Fresh.Missing ?: Fresh.Missing(NOT_STARTED)
+    if (cause.error) WarningBadge(cause.reason, modifier) else WaitingDash(cause.reason, modifier)
+}
+
+@Composable
+private fun WaitingDash(reason: String, modifier: Modifier = Modifier) = Tooltip("In attesa: $reason", modifier) {
+    Text("—", color = FutureText, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+}
+
 @Composable
 private fun WarningBadge(reason: String, modifier: Modifier = Modifier) = Tooltip("Non disponibile: $reason", modifier) {
     Canvas(Modifier.size(26.dp)) {
@@ -240,8 +255,6 @@ private fun Tooltip(text: String, modifier: Modifier = Modifier, content: @Compo
     }
 }
 
-private fun Fresh?.missingReason() = (this as? Fresh.Missing)?.reason ?: NOT_STARTED
-
 @Composable
 private fun SpeedTile(car: DriveState?, modifier: Modifier) = Tile(modifier) {
     val speed = car?.speed
@@ -251,7 +264,7 @@ private fun SpeedTile(car: DriveState?, modifier: Modifier) = Tile(modifier) {
             fontFamily = FontFamily.Monospace, modifier = Modifier.align(Alignment.Center),
         )
     } else {
-        WarningBadge(speed.missingReason(), Modifier.align(Alignment.Center))
+        MissingValue(speed, Modifier.align(Alignment.Center))
     }
     Text("km/h", color = Grey, fontSize = 12.sp, modifier = Modifier.align(Alignment.BottomEnd))
 }
@@ -271,7 +284,7 @@ private fun EvTile(car: DriveState?, modifier: Modifier) = Tile(modifier) {
                 Modifier.fillMaxHeight(0.8f).aspectRatio(1.8f, matchHeightConstraintsFirst = true).background(color.copy(alpha = 0.2f), RoundedCornerShape(50)),
                 contentAlignment = Alignment.Center,
             ) { Text("EV", color = color, fontSize = 26.sp, fontWeight = FontWeight.Bold) }
-            if (electricOnly == null) WarningBadge(car?.engineRpm.missingReason(), Modifier.align(Alignment.TopEnd))
+            if (electricOnly == null) MissingValue(car?.engineRpm, Modifier.align(Alignment.TopEnd))
         }
         HistorySquares()
     }
@@ -291,7 +304,7 @@ private fun BrakeTile(state: SessionState?, now: Long, modifier: Modifier) {
         is BrakeIndicator.Regenerative ->
             Green to (if (indicator.liftOff) "Rilascio" else "Rigenerativa") + (indicator.intensityPercent?.let { " $it %" } ?: "")
         is BrakeIndicator.Friction -> Red to "Attrito ${indicator.frictionPercent} %"
-        is BrakeIndicator.Unavailable -> Grey to "Non disponibile: ${indicator.reason}"
+        is BrakeIndicator.Unavailable -> Grey to (if (indicator.error) "Non disponibile: " else "In attesa: ") + indicator.reason
     }
     val unavailable = indicator is BrakeIndicator.Unavailable
     Tile(modifier.semantics { contentDescription = "Frenata: $label" }) {
@@ -299,7 +312,9 @@ private fun BrakeTile(state: SessionState?, now: Long, modifier: Modifier) {
             BrakeGauge(indicator.fill, color, dim = unavailable, Modifier.weight(1f))
             HistorySquares()
         }
-        if (indicator is BrakeIndicator.Unavailable) WarningBadge(indicator.reason, Modifier.align(Alignment.TopEnd))
+        if (indicator is BrakeIndicator.Unavailable) {
+            MissingValue(Fresh.Missing(indicator.reason, indicator.error), Modifier.align(Alignment.TopEnd))
+        }
     }
 }
 
@@ -355,10 +370,13 @@ private fun EngineTile(car: DriveState?, modifier: Modifier) = Tile(modifier) {
             Text(String.format(Locale.ITALY, "%.0f", rpm.value), color = color, fontSize = 28.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
             Text("rpm", color = Grey, fontSize = 11.sp)
         }
-        if (car.engineState == null) WarningBadge("stato del termico: coppia: ${car.engineTorque.missingReason()}", Modifier.align(Alignment.TopEnd))
+        if (car.engineState == null) {
+            val torque = car.engineTorque as Fresh.Missing
+            MissingValue(torque.copy(reason = "stato del termico: coppia: ${torque.reason}"), Modifier.align(Alignment.TopEnd))
+        }
     } else {
         Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-            WarningBadge(rpm.missingReason())
+            MissingValue(rpm)
             Text("rpm", color = Grey, fontSize = 11.sp)
         }
     }
@@ -410,7 +428,7 @@ private fun PowerBar(title: String, power: Fresh?, valueColor: Color, modifier: 
         if (power is Fresh.Value) {
             Text(String.format(Locale.ITALY, "%.1f", power.value), color = valueColor, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
         } else {
-            WarningBadge(power.missingReason())
+            MissingValue(power)
         }
     }
 

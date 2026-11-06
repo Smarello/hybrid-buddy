@@ -6,8 +6,11 @@ import it.techreloaded.hybridbuddy.session.SessionState
 import it.techreloaded.hybridbuddy.signals.SignalDefinition
 import java.util.Locale
 
-/** A value older than this is no longer shown as current. To be tuned on the car. */
-const val STALE_AFTER_MS = 2_000L
+/**
+ * A value older than this is no longer shown as current. 3 s (owner's choice, 0.4.1): on the first drive two reads of
+ * the same signal were up to 2.2 s apart without any error, and a 2 s limit made the dashboard flicker.
+ */
+const val STALE_AFTER_MS = 3_000L
 internal const val RATE_WINDOW_MS = 5_000L
 internal val ITALIAN = Locale.ITALY
 
@@ -19,12 +22,17 @@ sealed interface SignalPresentation {
 /** The current value of a signal, or why there is none. */
 sealed interface Fresh {
     data class Value(val value: Double, val ageMs: Long) : Fresh
-    data class Missing(val reason: String) : Fresh
+
+    /**
+     * [error] true when the latest read failed (refused, invalid answer, timeout, disconnected): the dashboard shows the
+     * yellow triangle. False while waiting for a first value or when the last one expired: a grey dash, no alarm.
+     */
+    data class Missing(val reason: String, val error: Boolean = false) : Fresh
 }
 
 fun freshValue(signal: SignalDefinition, state: SessionState, nowEpochMs: Long): Fresh {
     val reading = state.readings[signal.id] ?: return Fresh.Missing("in attesa")
-    reading.failure?.let { return Fresh.Missing(failureLabel(it)) }
+    reading.failure?.let { return Fresh.Missing(failureLabel(it), error = true) }
     val age = nowEpochMs - reading.atEpochMs
     if (age > STALE_AFTER_MS || reading.value == null) return Fresh.Missing("dato scaduto")
     return Fresh.Value(reading.value, age)

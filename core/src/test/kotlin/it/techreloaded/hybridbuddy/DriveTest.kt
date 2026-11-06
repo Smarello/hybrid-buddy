@@ -113,7 +113,7 @@ class DriveTest {
         // Every signal the coasting state needs is named when missing; the first missing one wins.
         assertEquals(BrakeIndicator.Unavailable("rilascio: velocità: 7DF: in attesa"), brakeIndicator(state(m to 0.0, r to 0.0), now))
         assertEquals(
-            BrakeIndicator.Unavailable("rilascio: acceleratore: 7D2: rifiuta 221060 (7F 22 31)"),
+            BrakeIndicator.Unavailable("rilascio: acceleratore: 7D2: rifiuta 221060 (7F 22 31)", error = true),
             brakeIndicator(state(m to 0.0, r to 0.0, speed to 60.0, failures = mapOf(pedal to "rifiuta 221060 (7F 22 31)")), now),
         )
         assertEquals(BrakeIndicator.Unavailable("rilascio: giri: 7DF: in attesa"), brakeIndicator(state(m to 0.0, r to 0.0, speed to 60.0, pedal to 0.0), now))
@@ -143,7 +143,7 @@ class DriveTest {
         val m = DriveSignals.brakeRequestTorque
         val r = DriveSignals.regenBrakeTorque
         assertEquals(
-            BrakeIndicator.Unavailable("7D2: rifiuta 221067 (7F 22 31)"),
+            BrakeIndicator.Unavailable("7D2: rifiuta 221067 (7F 22 31)", error = true),
             brakeIndicator(state(r to -10.0, failures = mapOf(m to "rifiuta 221067 (7F 22 31)")), now),
         )
         assertEquals(BrakeIndicator.Unavailable("7D2: in attesa"), brakeIndicator(state(m to -10.0), now))
@@ -167,6 +167,74 @@ class DriveTest {
         assertEquals(Fresh.Missing("giri: 7DF: in attesa"), enginePowerKw(state(DriveSignals.engineTorque to 100.0), now))
     }
 
+    @Test
+    fun `brake torques are truncated to whole Nm before the comparison, as Hybrid Assistant does`() {
+        val m = DriveSignals.brakeRequestTorque
+        val r = DriveSignals.regenBrakeTorque
+        val speed = DriveSignals.vehicleSpeed
+        // First drive (2026-11-05): a fraction of Nm apart is regeneration only, not "friction 0 %".
+        assertEquals(BrakeIndicator.Regenerative(null), brakeIndicator(state(m to -50.875, r to -50.75, speed to 60.0), now))
+        // −45.25 / −42.25 → −45 / −42: 3 Nm of friction, (−45 + 42)·100/−45 = 6 %.
+        assertEquals(BrakeIndicator.Friction(6), brakeIndicator(state(m to -45.25, r to -42.25, speed to 60.0), now))
+    }
+
+    @Test
+    fun `only a failed read is an error, a value awaited or late is not`() {
+        val m = DriveSignals.brakeRequestTorque
+        val r = DriveSignals.regenBrakeTorque
+        assertEquals(Fresh.Missing("7D2: in attesa"), DriveState(state(), now).brakeRequest)
+        // 3 s since 0.4.1: a read 2.5 s old is still shown, one 4 s old is late, not an error.
+        assertTrue(DriveState(state(m to -10.0), now + 2_400).brakeRequest is Fresh.Value)
+        assertEquals(Fresh.Missing("7D2: dato scaduto"), DriveState(state(m to -10.0), now + 4_000).brakeRequest)
+        assertEquals(BrakeIndicator.Unavailable("7D2: dato scaduto"), brakeIndicator(state(m to -10.0, r to -10.0), now + 4_000))
+        assertEquals(
+            Fresh.Missing("700: rifiuta 2210C2 (7F 22 31)", error = true),
+            DriveState(state(failures = mapOf(DriveSignals.engineTorque to "rifiuta 2210C2 (7F 22 31)")), now).engineTorque,
+        )
+        // Derived values: an error of a needed signal is an error.
+        assertEquals(
+            Fresh.Missing("giri: 7DF: non risponde (NO DATA)", error = true),
+            enginePowerKw(state(DriveSignals.engineTorque to 10.0, failures = mapOf(DriveSignals.engineSpeed to "non risponde (NO DATA)")), now),
+        )
+        // Alternatives (747 or 7D2): an error only when neither can give the value.
+        val oneFailed = mapOf(DriveSignals.batteryPower to "non risponde (NO DATA)")
+        assertEquals(Fresh.Missing("747: non risponde (NO DATA) · 7D2: in attesa"), batteryPowerKw(state(failures = oneFailed), now))
+        val bothFailed = oneFailed + (DriveSignals.batteryPowerFromHybridEcu to "rifiuta 221F9A (7F 22 31)")
+        assertEquals(true, (batteryPowerKw(state(failures = bothFailed), now) as Fresh.Missing).error)
+    }
+
+    @Test
+    fun `decodes M and R from one two-DID answer`() {
+        // 62 10 67 [M = 0x7E69 → −50.875] 10 69 [00 00] [R = 0x7E6A → −50.75], multi-frame.
+        assertEquals(
+            Decoded.Values(mapOf(DriveSignals.brakeRequestTorque.id to -50.875, DriveSignals.regenBrakeTorque.id to -50.75), "7DA"),
+            decode(DriveSignals.brakeTorques, listOf(0x62, 0x10, 0x67, 0x7E, 0x69, 0x10, 0x69, 0, 0, 0x7E, 0x6A)),
+        )
+        assertEquals(Decoded.Failure("risposta senza 1069 a 2210671069"), decode(DriveSignals.brakeTorques, listOf(0x62, 0x10, 0x67, 0x7E, 0x69)))
+        assertEquals(Decoded.Failure("rifiuta 2210671069 (7F 22 13)"), decode(DriveSignals.brakeTorques, listOf(0x7F, 0x22, 0x13)))
+        assertTrue(ReadOnlyCommands.isAllowed(DriveSignals.brakeTorques.command))
+    }
+
+    @Test
+    fun `when 7D2 refuses the two-DID request M and R are read separately for the rest of the connection`() {
+        val sent = java.util.concurrent.CopyOnWriteArrayList<String>()
+        val recorder = object : SessionRecorder {
+            override fun exchange(exchange: Exchange) {
+                sent += exchange.command
+            }
+
+            override fun event(atEpochMs: Long, event: String, detail: String?) = Unit
+        }
+        var clock = 0L
+        val car = SimulatedCar(clock = { clock }, refusesTwoDids = true)
+        clock = 31_000 // regenerative braking: M = R = −60
+        val session = AcquisitionSession(live, car, DriveSignals.schedule, recorder, fastTimeouts)
+        val state = runUntil(session) { sent.count { it == "221069" } >= 5 }
+        assertEquals(1, sent.count { it == "2210671069" })
+        assertEquals(-60.0, state.readings.getValue(DriveSignals.regenBrakeTorque.id).value)
+        assertTrue(brakeIndicator(state, System.currentTimeMillis()) is BrakeIndicator.Regenerative)
+    }
+
     private fun simulatedDrive(car: SimulatedCar, recorder: JsonlSessionRecorder? = null) =
         AcquisitionSession(live, car, DriveSignals.schedule, recorder, fastTimeouts)
 
@@ -186,7 +254,9 @@ class DriveTest {
 
         val sent = state.recentExchanges.map { it.command }
         assertTrue(sent.all(ReadOnlyCommands::isAllowed))
-        val firstBrake = sent.indexOf("221067")
+        val firstBrake = sent.indexOf("2210671069")
+        // M and R in one request: never read separately while 7D2 accepts it.
+        assertTrue("221067" !in sent && "221069" !in sent)
         assertEquals(listOf("ATSH 7D2", "ATCRA 7DA", "ATFCSH 7D2", "ATFCSD 30 00 00", "ATFCSM 1"), sent.subList(firstBrake - 5, firstBrake))
         assertEquals(1, sent.count { it == "ATFCSM 1" })
     }
@@ -202,7 +272,7 @@ class DriveTest {
             override fun event(atEpochMs: Long, event: String, detail: String?) = Unit
         }
         val session = AcquisitionSession(live, SimulatedCar(silentEcus = setOf("747")), DriveSignals.schedule, recorder, fastTimeouts)
-        val state = runUntil(session) { sent.count { it == "221067" } >= 40 }
+        val state = runUntil(session) { sent.count { it == "2210671069" } >= 40 }
         val now = System.currentTimeMillis()
         assertTrue(batteryPowerKw(state, now) is Fresh.Value)
         assertEquals("non risponde (NO DATA)", state.readings.getValue(DriveSignals.batteryPower.id).failure)
@@ -216,7 +286,8 @@ class DriveTest {
         val session = simulatedDrive(SimulatedCar(refusingEcus = setOf("7D2")))
         val state = runUntil(session) { it.readings.size == session.signals.size }
         val now = System.currentTimeMillis()
-        assertEquals(BrakeIndicator.Unavailable("7D2: rifiuta 221067 (7F 22 31)"), brakeIndicator(state, now))
+        // The two-DID request is refused first, then the separate reads: the cause is the latter.
+        assertEquals(BrakeIndicator.Unavailable("7D2: rifiuta 221067 (7F 22 31)", error = true), brakeIndicator(state, now))
         assertTrue(enginePowerKw(state, now) is Fresh.Value)
     }
 
@@ -238,11 +309,11 @@ class DriveTest {
         val writer = StringWriter()
         val header = RecordingHeader(startedAtEpochMs = 0, source = RecordingHeader.SIMULATED, appVersion = "test", note = "guida")
         val session = simulatedDrive(car, JsonlSessionRecorder(writer, header))
-        runUntil(session) { state -> state.recentExchanges.count { it.command == "221067" } >= 8 }
+        runUntil(session) { state -> state.recentExchanges.count { it.command == "2210671069" } >= 8 }
         val recorded = session.state.value // after the stop: includes every recorded exchange
 
         val (_, lines) = Recording.parse(writer.toString().lineSequence())
-        assertTrue(lines.any { it is RecordedExchange && it.cmd == "221069" })
+        assertTrue(lines.any { it is RecordedExchange && it.cmd == "2210671069" })
         val replay = AcquisitionSession(SessionSource.Replay("guida", simulated = true), ReplayConnector(lines), DriveSignals.schedule)
         val replayed = runUntil(replay) { it.phoneLink == PhoneLinkState.FINISHED }
 

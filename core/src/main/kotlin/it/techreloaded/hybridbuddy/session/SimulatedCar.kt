@@ -12,12 +12,14 @@ import kotlin.math.roundToInt
  * on a 60 s loop: acceleration, cruise, regenerative braking, braking with friction, stop below 15 km/h, standstill.
  * Invented values for trying the Guida screen and for tests: they prove nothing about the car.
  * Control units in [silentEcus] (request headers) answer NO DATA, those in [refusingEcus] answer `7F 22 31`.
+ * With [refusesTwoDids] 7D2 answers `7F 22 13` (incorrect length) to a request with two DIDs.
  */
 class SimulatedCar(
     private val clock: () -> Long = System::currentTimeMillis,
     private val silentEcus: Set<String> = emptySet(),
     private val refusingEcus: Set<String> = emptySet(),
     private val replyDelayMs: Long = 0,
+    private val refusesTwoDids: Boolean = false,
 ) : AdapterConnector {
     private val startedAt = clock()
 
@@ -48,12 +50,15 @@ class SimulatedCar(
         if (header in silentEcus) return "NO DATA\r\r"
         val response = responseHeader(header) ?: return "NO DATA\r\r"
         if (header in refusingEcus) return frames(response, listOf(0x7F, command.substring(0, 2).toInt(16), 0x31))
+        if (refusesTwoDids && command.length > 6) return frames(response, listOf(0x7F, 0x22, 0x13))
         val now = moment(((clock() - startedAt) / 1000.0) % LOOP_SECONDS)
         val payload = when (header to command) {
             "7DF" to "010C" -> listOf(0x41, 0x0C) + word((now.rpm * 4).roundToInt())
             "7DF" to "010D" -> listOf(0x41, 0x0D, now.speedKmh.roundToInt())
             "7D2" to "221067" -> did(0x1067, word(signed(now.brakeRequestNm * 8)) + listOf(0, 0))
             "7D2" to "221069" -> did(0x1069, listOf(0, 0) + word(signed(now.regenNm * 8)))
+            "7D2" to "2210671069" ->
+                did(0x1067, word(signed(now.brakeRequestNm * 8))) + listOf(0x10, 0x69, 0, 0) + word(signed(now.regenNm * 8))
             "7D2" to "221060" -> did(0x1060, listOf((now.acceleratorPercent * 2).roundToInt()))
             "747" to "221F9A", "7D2" to "221F9A" -> {
                 val amps = now.batteryKw * 1000 / VOLTS

@@ -137,6 +137,7 @@ class JsonlSessionRecorder(private val writer: Writer, header: RecordingHeader) 
  */
 class ReplayConnector(private val lines: List<RecordingLine>) : AdapterConnector {
     private var cursor = 0
+    private val recordedCommands = lines.filterIsInstance<RecordedExchange>().map { it.cmd }.toSet()
 
     override suspend fun connect(): AdapterLink {
         while (cursor < lines.size) {
@@ -150,6 +151,8 @@ class ReplayConnector(private val lines: List<RecordingLine>) : AdapterConnector
     }
 
     private fun replyTo(command: String): AdapterReply {
+        // A command this recording never contains (e.g. made by a newer version): the adapter does not know it.
+        if (command !in recordedCommands) return AdapterReply.Text(listOf("?\r\r" + ElmConnection.PROMPT), 0)
         while (cursor < lines.size) {
             val line = lines[cursor]
             if (line is RecordedEvent && line.event != RecordedEvent.DISCONNECTED) return AdapterReply.Disconnect

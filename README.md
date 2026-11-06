@@ -51,8 +51,9 @@ batteria HV, viaggio, % di carica, Check) aspettano segnali non ancora letti e n
   grigio non attivo; un tocco mostra il dettaglio per centralina), bollino LIVE / SIMULATA / REPLAY, 🔧 = **Debug e
   prove**, **▶** / **■**.
 
-Quasi niente testo: un dato mancante mostra un **triangolo giallo** al posto del valore, e un tocco sul triangolo dice la
-causa (es. «7D2: rifiuta 221067 (7F 22 31)»). Mai zero né l'ultimo valore. Lo schermo resta acceso.
+Quasi niente testo: una lettura **fallita** mostra un **triangolo giallo** al posto del valore, e un tocco sul triangolo dice
+la causa (es. «7D2: rifiuta 221067 (7F 22 31)»). Un dato solo in attesa o in ritardo (oltre 3 s) mostra un **trattino
+grigio**, senza allarme; il tocco dice «in attesa» o «dato scaduto». Mai zero né l'ultimo valore. Lo schermo resta acceso.
 1. LX inserito. Apri l'app: si collega da sola all'LX già scelto (la prima volta **▶** chiede quale).
 2. Già da fermo in READY i due segmenti in basso devono essere verdi; se il secondo è giallo, tocca l'icona per vedere
    quale centralina non risponde.
@@ -73,5 +74,5 @@ esportata (una `guida-…` si apre nel cruscotto). In replay il bollino lo segna
 - I parametri di base usano risposte CAN 11-bit a frame singolo; l'esplorazione ricompone anche le risposte multi-frame.
 - L'esplorazione non si riproduce in replay: il file si analizza fuori dall'app.
 - Il riepilogo "cambiano col pedale" è indicativo (D-016).
-- Timeout, scadenza (2 s) e attese di riconnessione sono valori iniziali da tarare sull'auto.
+- Timeout, scadenza (3 s) e attese di riconnessione sono valori iniziali da tarare sull'auto.
 - Se si preme Ferma mentre il telefono sta ancora cercando di collegarsi all'LX, l'arresto può richiedere ~12 s.

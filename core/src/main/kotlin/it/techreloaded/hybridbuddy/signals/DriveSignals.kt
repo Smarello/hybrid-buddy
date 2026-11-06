@@ -30,6 +30,31 @@ object DriveSignals {
         signed16(b, 2) / 8.0
     }
 
+    /**
+     * M and R in one read, `22 1067 1069`: one sample from the same instant, as Hybrid Assistant gets them in the dynamic
+     * DID F301 (which needs writes, excluded). Separate reads were 76 ms apart on the first drive, enough to show false
+     * friction while the pedal moves. If 7D2 refuses the request or leaves a DID out, [brakeRequestTorque] and
+     * [regenBrakeTorque] are read separately for the rest of the connection (D-028).
+     */
+    val brakeTorques = SignalDefinition(
+        "brake_torques", "Coppie del freno (lettura unica)", "2210671069", "Nm", 0, hybridEcu,
+        fallback = listOf(brakeRequestTorque, regenBrakeTorque),
+    ) { lines ->
+        // 62 10 67 m1 m2 10 69 r1 r2 r3 r4
+        when (val answer = Mode22.read(lines, hybridEcu.responseHeader, 0x1067)) {
+            is Mode22.Answer.Data -> {
+                val b = answer.bytes
+                if (b.size < 8 || b[2] != 0x10 || b[3] != 0x69) Decoded.Failure("risposta senza 1069 a 2210671069")
+                else Decoded.Values(
+                    mapOf(brakeRequestTorque.id to signed16(b, 0) / 8.0, regenBrakeTorque.id to signed16(b, 6) / 8.0),
+                    hybridEcu.responseHeader,
+                )
+            }
+            is Mode22.Answer.Refused -> Decoded.Failure("rifiuta 2210671069 (7F 22 %02X)".format(answer.code))
+            Mode22.Answer.None -> Decoded.Failure("nessuna risposta valida a 2210671069")
+        }
+    }
+
     /** `1060` b1 / 2 in Hybrid Assistant: accelerator pedal, "pressed" when > 0 (meaning inferred from its use, SIGNALS.md). */
     val acceleratorPedal = mode22("accelerator_pedal", "Pedale acceleratore", hybridEcu, "1060", "%", 0, 1) { b -> b[0] / 2.0 }
 
@@ -57,15 +82,18 @@ object DriveSignals {
 
     /**
      * Polling rounds, cycled: the brake torques and the accelerator in every round, everything else every other round, so that no signal
-     * expires between two reads (STALE_AFTER_MS = 2 s). First drive (2026-11-05): a round took 0.33 s median, 0.6 s p90,
+     * expires between two reads (STALE_AFTER_MS, 3 s since 0.4.1). First drive (2026-11-05): a round took 0.33 s median, 0.6 s p90,
      * so with four rounds the engine torque was read every 1.2–2.2 s and kept expiring (D-025). Five control unit
      * switches per cycle. The battery is read on both 747 and 7D2: the interpretation prefers 747 (Li-ion branch of
      * Hybrid Assistant).
      */
     val schedule: List<List<SignalDefinition>> = listOf(
-        listOf(brakeRequestTorque, regenBrakeTorque, acceleratorPedal, vehicleSpeed, engineSpeed, batteryPower, chargeLimit),
-        listOf(brakeRequestTorque, regenBrakeTorque, acceleratorPedal, batteryPowerFromHybridEcu, chargeLimitFromHybridEcu, engineTorque),
+        listOf(brakeTorques, acceleratorPedal, vehicleSpeed, engineSpeed, batteryPower, chargeLimit),
+        listOf(brakeTorques, acceleratorPedal, batteryPowerFromHybridEcu, chargeLimitFromHybridEcu, engineTorque),
     )
+
+    /** Signals that carry readings: [brakeTorques] stores its values under the ids of its fallback signals. */
+    val polled: List<SignalDefinition> = schedule.flatten().flatMap { it.fallback.ifEmpty { listOf(it) } }.distinct()
 
     /**
      * DID 1F9A: voltage b3-b4 /64 V, current b5-b6 two's complement /10 A, negative while charging; P = V·I/1000.

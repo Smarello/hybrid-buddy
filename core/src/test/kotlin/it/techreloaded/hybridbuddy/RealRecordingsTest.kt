@@ -123,6 +123,22 @@ class RealRecordingsTest {
     }
 
     @Test
+    fun `A34 2026-11-05 - the first drive replays through the 0_4_1 schedule, which falls back to separate brake reads`() = runBlocking {
+        val (_, lines) = load("2026-11-05-a34-guida-0.3.0.jsonl")
+        // About 3 s of driving, recorded durations honoured.
+        val replay = AcquisitionSession(
+            SessionSource.Replay("a34", simulated = false), ReplayConnector(lines.take(120)), DriveSignals.schedule, timeouts = fastTimeouts,
+        )
+        val job = launch(Dispatchers.Default) { replay.run() }
+        withTimeout(30_000) { job.join() }
+        val sent = replay.state.value.recentExchanges.map { it.command }
+        // 0.3.0 never sent the two-DID request: the replayed adapter does not know it ("?"), M and R are then read apart.
+        assertEquals("?", replay.state.value.recentExchanges.first { it.command == DriveSignals.brakeTorques.command }.error)
+        assertEquals(1, sent.count { it == DriveSignals.brakeTorques.command })
+        assertTrue(replay.state.value.readings.getValue(DriveSignals.regenBrakeTorque.id).value != null)
+    }
+
+    @Test
     fun `A34 2026-11-05 - first drive with 0_3_0, 7D2 747 700 answer the direct reads, 7E0 never answers mode 01`() {
         val (header, lines) = load("2026-11-05-a34-guida-0.3.0.jsonl")
         assertEquals("0.3.0", header.appVersion)
@@ -134,7 +150,7 @@ class RealRecordingsTest {
         assertTrue(exchanges.any { it.cmd == "ATSH 7E0" } && exchanges.none { it.cmd == "ATSH 7DF" })
 
         // Readings rebuilt as the session built them; the indicator evaluated at every read of the regenerative torque.
-        val signals = DriveSignals.schedule.flatten().distinct()
+        val signals = DriveSignals.polled
         var requestHeader = ""
         var state = SessionState(SessionSource.Replay("a34", simulated = false), phoneLink = PhoneLinkState.CONNECTED)
         val indicators = mutableListOf<BrakeIndicator>()
@@ -148,6 +164,7 @@ class RealRecordingsTest {
                     null -> when (val decoded = signal.decode(AdapterResponse.lines(exchange.raw, exchange.cmd))) {
                         is Decoded.Value -> SignalReading(exchange.t, decoded.value, decoded.ecu, null)
                         is Decoded.Failure -> SignalReading(exchange.t, null, null, decoded.reason)
+                        is Decoded.Values -> error("0.3.0 never sent a two-DID request")
                     }
                     else -> SignalReading(exchange.t, null, null, "non risponde ($error)")
                 }
@@ -167,11 +184,13 @@ class RealRecordingsTest {
         // Pedal released: without the speed (and the accelerator, never read by 0.3.0) the coasting state is undecidable.
         assertEquals(506, indicators.count { it is BrakeIndicator.Unavailable && it.reason.startsWith("rilascio: velocità") })
         val regenerative = indicators.filterIsInstance<BrakeIndicator.Regenerative>()
-        assertEquals(22, regenerative.size)
+        // Torques truncated to whole Nm as Hybrid Assistant does (0.4.1): 9 readings a fraction of Nm apart (e.g. M −50.875,
+        // R −50.75) are regeneration only; 0.4.0 counted them as friction 0 %, shown red (22 regenerative, 94 friction).
+        assertEquals(31, regenerative.size)
         assertEquals(40, regenerative.mapNotNull { it.intensityPercent }.max())
         // Friction needs the speed, which 7E0 never gave: never classified in this drive.
         assertEquals(0, indicators.count { it is BrakeIndicator.Friction })
-        assertEquals(94, indicators.count { it is BrakeIndicator.Unavailable && it.reason.startsWith("velocità") })
+        assertEquals(85, indicators.count { it is BrakeIndicator.Unavailable && it.reason.startsWith("velocità") })
 
         // HV current as 16-bit two's complement: −29.9…+26.5 kW; the (raw − 32768) form would give about ±580 kW (D-024).
         assertTrue(batteryKw.min() in -31.0..-28.0 && batteryKw.max() in 25.0..28.0, "potenza batteria ${batteryKw.min()}…${batteryKw.max()}")
