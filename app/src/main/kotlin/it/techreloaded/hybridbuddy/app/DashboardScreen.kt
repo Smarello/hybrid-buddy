@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,14 +61,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import it.techreloaded.hybridbuddy.interpretation.BrakeIndicator
 import it.techreloaded.hybridbuddy.interpretation.DriveState
 import it.techreloaded.hybridbuddy.interpretation.EngineState
 import it.techreloaded.hybridbuddy.interpretation.Fresh
 import it.techreloaded.hybridbuddy.interpretation.LinkLevel
 import it.techreloaded.hybridbuddy.interpretation.brakeIndicator
-import it.techreloaded.hybridbuddy.interpretation.brakeReadsPerSecond
 import it.techreloaded.hybridbuddy.interpretation.driveEcuStatus
+import it.techreloaded.hybridbuddy.interpretation.ChainLink
 import it.techreloaded.hybridbuddy.interpretation.enginePowerKw
 import it.techreloaded.hybridbuddy.session.PhoneLinkState
 import it.techreloaded.hybridbuddy.session.SessionSource
@@ -194,14 +198,6 @@ internal fun DashboardScreen(onDebug: () -> Unit) {
 private fun Tile(modifier: Modifier, background: Color = CardBackground, content: @Composable BoxScope.() -> Unit) =
     Box(modifier.fillMaxWidth().background(background, RoundedCornerShape(10.dp)).padding(8.dp), content = content)
 
-/** A tile with its caption on top and the content centred in the rest. */
-@Composable
-private fun CaptionedTile(caption: String, modifier: Modifier, content: @Composable BoxScope.() -> Unit) = Tile(modifier) {
-    Column(Modifier.fillMaxSize()) {
-        Caption(caption)
-        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center, content = content)
-    }
-}
 
 /** A tile of the Hybrid Assistant dashboard whose signals are not read yet: greyed out, never a fake value. */
 @Composable
@@ -215,43 +211,68 @@ private fun FutureTile(title: String, detail: String, modifier: Modifier) = Tile
 @Composable
 private fun Caption(text: String, modifier: Modifier = Modifier) = Text(text.uppercase(), color = Grey, fontSize = 10.sp, letterSpacing = 1.sp, modifier = modifier)
 
-/** "Non disponibile" with its cause: never zero, never the last value. */
+/** Yellow triangle in place of a missing value (never zero, never the last value); a tap shows the cause. */
 @Composable
-private fun Unavailable(reason: String, modifier: Modifier = Modifier) = Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-    Text("Non disponibile", color = Grey, fontSize = 10.sp, maxLines = 1, softWrap = false)
-    Text(reason, color = Amber, fontSize = 9.sp, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+private fun WarningBadge(reason: String, modifier: Modifier = Modifier) = Tooltip("Non disponibile: $reason", modifier) {
+    Canvas(Modifier.size(26.dp)) {
+        val path = Path().apply { moveTo(size.width / 2, 0f); lineTo(size.width, size.height); lineTo(0f, size.height); close() }
+        drawPath(path, Amber)
+        val x = size.width / 2
+        drawLine(CardBackground, Offset(x, size.height * 0.38f), Offset(x, size.height * 0.7f), strokeWidth = size.width * 0.11f, cap = StrokeCap.Round)
+        drawCircle(CardBackground, size.width * 0.06f, Offset(x, size.height * 0.85f))
+    }
+}
+
+/** Shows [text] in a popup when the content is tapped; the text is also the content description. */
+@Composable
+private fun Tooltip(text: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    var shown by remember { mutableStateOf(false) }
+    Box(modifier.clickable { shown = true }.semantics { contentDescription = text }) {
+        content()
+        if (shown) {
+            Popup(alignment = Alignment.TopCenter, onDismissRequest = { shown = false }, properties = PopupProperties(focusable = true)) {
+                Text(
+                    text, color = Bright, fontSize = 12.sp,
+                    modifier = Modifier.widthIn(max = 280.dp).background(Color(0xFF2A2F36), RoundedCornerShape(8.dp)).padding(8.dp),
+                )
+            }
+        }
+    }
 }
 
 private fun Fresh?.missingReason() = (this as? Fresh.Missing)?.reason ?: NOT_STARTED
 
 @Composable
-private fun SpeedTile(car: DriveState?, modifier: Modifier) = CaptionedTile("Velocità", modifier) {
-    when (val speed = car?.speed) {
-        is Fresh.Value -> {
-            Text(
-                String.format(Locale.ITALY, "%.0f", speed.value), color = Bright, fontSize = 44.sp, fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace,
-            )
-            Text("km/h", color = Grey, fontSize = 12.sp, modifier = Modifier.align(Alignment.BottomEnd))
-        }
-        else -> Unavailable(speed.missingReason())
+private fun SpeedTile(car: DriveState?, modifier: Modifier) = Tile(modifier) {
+    val speed = car?.speed
+    if (speed is Fresh.Value) {
+        Text(
+            String.format(Locale.ITALY, "%.0f", speed.value), color = Bright, fontSize = 48.sp, fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.Monospace, modifier = Modifier.align(Alignment.Center),
+        )
+    } else {
+        WarningBadge(speed.missingReason(), Modifier.align(Alignment.Center))
     }
+    Text("km/h", color = Grey, fontSize = 12.sp, modifier = Modifier.align(Alignment.BottomEnd))
 }
 
 /** EV icon of Hybrid Assistant: yellow when running electric-only, grey on petrol (red with a low charge needs the SOC, not read yet). */
 @Composable
 private fun EvTile(car: DriveState?, modifier: Modifier) = Tile(modifier) {
-    val (color, label) = when (car?.electricOnly) {
-        null -> FutureText to "Non disponibile: ${car?.engineRpm.missingReason()}"
+    val electricOnly = car?.electricOnly
+    val (color, label) = when (electricOnly) {
+        null -> FutureText to "non disponibile"
         true -> Amber to "solo elettrico"
         false -> Grey to "termico in uso"
     }
     Column(Modifier.fillMaxSize().semantics { contentDescription = "EV: $label" }, horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            Modifier.weight(1f).aspectRatio(1.8f, matchHeightConstraintsFirst = true).background(color.copy(alpha = 0.2f), RoundedCornerShape(50)),
-            contentAlignment = Alignment.Center,
-        ) { Text("EV", color = color, fontSize = 24.sp, fontWeight = FontWeight.Bold) }
-        Text(label, color = color, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier.fillMaxHeight(0.8f).aspectRatio(1.8f, matchHeightConstraintsFirst = true).background(color.copy(alpha = 0.2f), RoundedCornerShape(50)),
+                contentAlignment = Alignment.Center,
+            ) { Text("EV", color = color, fontSize = 26.sp, fontWeight = FontWeight.Bold) }
+            if (electricOnly == null) WarningBadge(car?.engineRpm.missingReason(), Modifier.align(Alignment.TopEnd))
+        }
         HistorySquares()
     }
 }
@@ -270,15 +291,15 @@ private fun BrakeTile(state: SessionState?, now: Long, modifier: Modifier) {
         is BrakeIndicator.Regenerative ->
             Green to (if (indicator.liftOff) "Rilascio" else "Rigenerativa") + (indicator.intensityPercent?.let { " $it %" } ?: "")
         is BrakeIndicator.Friction -> Red to "Attrito ${indicator.frictionPercent} %"
-        is BrakeIndicator.Unavailable -> Amber to "Non disponibile: ${indicator.reason}"
+        is BrakeIndicator.Unavailable -> Grey to "Non disponibile: ${indicator.reason}"
     }
     val unavailable = indicator is BrakeIndicator.Unavailable
     Tile(modifier.semantics { contentDescription = "Frenata: $label" }) {
         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-            BrakeGauge(indicator.fill, if (unavailable) Grey else color, dim = unavailable, Modifier.weight(1f))
-            Text(label, color = color, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+            BrakeGauge(indicator.fill, color, dim = unavailable, Modifier.weight(1f))
             HistorySquares()
         }
+        if (indicator is BrakeIndicator.Unavailable) WarningBadge(indicator.reason, Modifier.align(Alignment.TopEnd))
     }
 }
 
@@ -321,21 +342,25 @@ private fun DrawScope.brakeDisc(radius: Float, color: Color) {
 
 /** Engine icon of Hybrid Assistant: rpm, grey stopped, green running, yellow spinning without fuel. The S-state is not read. */
 @Composable
-private fun EngineTile(car: DriveState?, modifier: Modifier) = CaptionedTile("Termico", modifier) {
+private fun EngineTile(car: DriveState?, modifier: Modifier) = Tile(modifier) {
     val rpm = car?.engineRpm
     if (car != null && rpm is Fresh.Value) {
         val (color, label) = when (car.engineState) {
             EngineState.OFF -> Grey to "spento"
             EngineState.RUNNING -> Green to "acceso"
             EngineState.SPINNING -> Amber to "trascinato"
-            null -> Bright to "coppia: ${car.engineTorque.missingReason()}"
+            null -> Bright to "stato non disponibile"
         }
-        Column(Modifier.semantics { contentDescription = "Termico: $label" }, horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(String.format(Locale.ITALY, "%.0f", rpm.value), color = color, fontSize = 26.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-            Text("rpm · $label", color = color, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Column(Modifier.align(Alignment.Center).semantics { contentDescription = "Termico: $label" }, horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(String.format(Locale.ITALY, "%.0f", rpm.value), color = color, fontSize = 28.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+            Text("rpm", color = Grey, fontSize = 11.sp)
         }
+        if (car.engineState == null) WarningBadge("stato del termico: coppia: ${car.engineTorque.missingReason()}", Modifier.align(Alignment.TopEnd))
     } else {
-        Unavailable(rpm.missingReason())
+        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+            WarningBadge(rpm.missingReason())
+            Text("rpm", color = Grey, fontSize = 11.sp)
+        }
     }
 }
 
@@ -385,11 +410,11 @@ private fun PowerBar(title: String, power: Fresh?, valueColor: Color, modifier: 
         if (power is Fresh.Value) {
             Text(String.format(Locale.ITALY, "%.1f", power.value), color = valueColor, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
         } else {
-            Unavailable(power.missingReason())
+            WarningBadge(power.missingReason())
         }
     }
 
-/** Bottom bar of Hybrid Assistant: battery check (not yet), the car with its control units, the wrench (debug mode), start/stop. */
+/** Bottom bar of Hybrid Assistant: battery check (not yet), phone ⇄ LX ⇄ car, source, the wrench (debug mode), start/stop. */
 @Composable
 private fun BottomBar(state: SessionState?, now: Long, running: Boolean, onStart: () -> Unit, onStop: () -> Unit, onDebug: () -> Unit) {
     Row(Modifier.fillMaxWidth().height(44.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -398,24 +423,11 @@ private fun BottomBar(state: SessionState?, now: Long, running: Boolean, onStart
                 .semantics { contentDescription = "Controllo batteria: in arrivo" },
             contentAlignment = Alignment.Center,
         ) { Text("Check", color = FutureText, fontSize = 13.sp) }
-        val links = state?.let { driveEcuStatus(it, now) }.orEmpty()
-        val carReached = links.getOrNull(1)?.level == LinkLevel.OK
         Row(
-            Modifier.weight(1f).fillMaxHeight().background(if (carReached) Green.copy(alpha = 0.22f) else CardBackground, RoundedCornerShape(10.dp))
-                .padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
+            Modifier.weight(1f).fillMaxHeight().background(CardBackground, RoundedCornerShape(10.dp)).padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Yaris", color = if (carReached) Green else Grey, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            links.forEach { link ->
-                val (color, symbol) = when (link.level) {
-                    LinkLevel.OK -> Green to "●"
-                    LinkLevel.WARNING -> Amber to "●"
-                    LinkLevel.ERROR -> Red to "✖"
-                    LinkLevel.IDLE -> Grey to "○"
-                }
-                Text("$symbol ${link.label}", color = color, fontSize = 12.sp)
-            }
-            if (state != null) Text(String.format(Locale.ITALY, "freno %.1f/s", brakeReadsPerSecond(state, now)), color = Grey, fontSize = 10.sp)
+            ConnectionIndicator(state?.let { driveEcuStatus(it, now) }.orEmpty(), state?.phoneLinkDetail)
             Spacer(Modifier.weight(1f))
             SourceChip(state?.source)
         }
@@ -424,11 +436,62 @@ private fun BottomBar(state: SessionState?, now: Long, running: Boolean, onStart
             modifier = Modifier.fillMaxHeight().background(CardBackground, RoundedCornerShape(10.dp)).semantics { contentDescription = "Modalità debug e prove" },
         ) { Text("🔧", fontSize = 18.sp) }
         if (running) {
-            Button(onClick = onStop, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5A2626), contentColor = Color(0xFFFFD6D6))) { Text("■ Ferma") }
+            Button(
+                onClick = onStop, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5A2626), contentColor = Color(0xFFFFD6D6)),
+                modifier = Modifier.semantics { contentDescription = "Ferma" },
+            ) { Text("■", fontSize = 18.sp) }
         } else {
-            Button(onClick = onStart) { Text("▶ Avvia") }
+            Button(onClick = onStart, modifier = Modifier.semantics { contentDescription = "Avvia" }) { Text("▶", fontSize = 18.sp) }
         }
     }
+}
+
+/**
+ * Phone ⇄ LX ⇄ car: one coloured segment per link (green ok, yellow in progress or partial, red failed, grey idle). The car
+ * link sums up the control units; their names and states appear only in the tooltip, as technical detail.
+ */
+@Composable
+private fun ConnectionIndicator(links: List<ChainLink>, phoneDetail: String?) {
+    val phoneToAdapter = links.firstOrNull()?.level ?: LinkLevel.IDLE
+    val units = links.drop(1)
+    val adapterToCar = when {
+        phoneToAdapter != LinkLevel.OK || units.isEmpty() -> LinkLevel.IDLE
+        units.all { it.level == LinkLevel.OK } -> LinkLevel.OK
+        units.all { it.level == LinkLevel.ERROR } -> LinkLevel.ERROR
+        else -> LinkLevel.WARNING
+    }
+    fun words(level: LinkLevel) = when (level) {
+        LinkLevel.OK -> "ok"
+        LinkLevel.WARNING -> "in corso o parziale"
+        LinkLevel.ERROR -> "fallito"
+        LinkLevel.IDLE -> "non attivo"
+    }
+    val detail = buildString {
+        append("Telefono → LX: ${words(phoneToAdapter)}")
+        if (phoneDetail != null && phoneToAdapter != LinkLevel.OK) append(" (${phoneDetail})")
+        append("\nLX → Auto: ${words(adapterToCar)}")
+        units.forEach { append("\n  ${it.label}: ${words(it.level)}") }
+    }
+    Tooltip(detail) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("📱", fontSize = 18.sp)
+            LinkSegment(phoneToAdapter)
+            Text("LX", color = Bright, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.background(Color(0xFF2A2F36), RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 2.dp))
+            LinkSegment(adapterToCar)
+            Text("🚗", fontSize = 18.sp)
+        }
+    }
+}
+
+@Composable
+private fun LinkSegment(level: LinkLevel) {
+    val color = when (level) {
+        LinkLevel.OK -> Green
+        LinkLevel.WARNING -> Amber
+        LinkLevel.ERROR -> Red
+        LinkLevel.IDLE -> DimTrack
+    }
+    Box(Modifier.width(26.dp).height(5.dp).background(color, RoundedCornerShape(3.dp)))
 }
 
 @Composable

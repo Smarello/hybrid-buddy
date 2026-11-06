@@ -8,9 +8,11 @@
   EV, powermeter a barre (termico, batteria con tacca del limite di carica), termico (giri e stato: spento / acceso /
   trascinato, nuovo `DriveState.engineState` con test). Grigi «in arrivo»: consumo, temperature, batteria HV (temperatura,
   ventola, % di carica), viaggio, storico frenate e consumi, Check. La vecchia schermata principale è «Debug e prove» (🔧).
-  Al lancio l'app si collega da sola come HA. Verificato automaticamente (52 test JVM), build, APK installato sul Galaxy A34
-  e controllato con screenshot (2026-11-06): riquadri leggibili in landscape senza LX e con la guida simulata (anello,
-  EV, barre, termico, barra delle centraline). **Non verificato**: tutto ciò che la 0.3.2 lasciava da provare sull'auto (sotto).
+  Al lancio l'app si collega da sola come HA. Quasi niente testo sui riquadri attivi (richiesta del proprietario): un dato
+  mancante è un triangolo giallo con la causa in un tooltip al tocco; in basso 📱 — LX — 🚗 con un segmento colorato per
+  collegamento e il dettaglio per centralina solo nel tooltip. Verificato automaticamente (52 test JVM), build, APK installato
+  sul Galaxy A34 e controllato con screenshot (2026-11-06): a riposo senza LX, con la guida simulata, tooltip del triangolo
+  e del collegamento. **Non verificato**: tutto ciò che la 0.3.2 lasciava da provare sull'auto (sotto).
 - **0.3.2 — stati di guida e «Rilascio»** (D-026): `DriveState` deriva a ogni valutazione gli stati di `carstate` di Hybrid
   Assistant (EV, termico trascinato o spento, in movimento, frenata, attrito, rilascio) dai segnali freschi; l'anello
   mostra in verde anche la rigenerazione al rilascio dell'acceleratore (potenza batteria < 0 con `221060` = 0, velocità

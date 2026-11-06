@@ -40,20 +40,22 @@ Sola lettura, come sempre. La schermata principale (in landscape) ha la struttur
 (manuale utente v1.1, §8.1): stessi riquadri, nelle stesse posizioni. Quelli grigi con «in arrivo» (consumo, temperature,
 batteria HV, viaggio, % di carica, Check) aspettano segnali non ancora letti e non mostrano mai valori finti. Quelli attivi:
 - **Velocità** (km/h, da `010D`).
-- **Freno**: un disco con un anello che si riempie (vuoto e grigio = nessuna frenata; verde = solo rigenerativa, in
-  proporzione al limite di carica, con l'etichetta «Rilascio» quando viene dal solo rilascio dell'acceleratore; rosso =
-  interviene l'attrito, in proporzione alla quota d'attrito, scritta sotto il disco). Sotto 15 km/h l'attrito per fermarsi
-  non viene contato. I 5 riquadri dello storico delle frenate sono grigi (in arrivo).
+- **Freno**: un disco con un anello che si riempie (vuoto e grigio = nessuna frenata; verde = solo rigenerativa, anche al
+  rilascio dell'acceleratore, in proporzione al limite di carica; rosso = interviene l'attrito, in proporzione alla quota
+  d'attrito). Sotto 15 km/h l'attrito per fermarsi non viene contato. I 5 riquadri dello storico sono grigi (in arrivo).
 - **EV**: giallo quando il termico è sotto gli 800 giri (solo elettrico), grigio quando è in uso.
 - **Powermeter**: barra del **termico** (dal basso, fondo scala 67 kW) e della **batteria** (dal centro: in alto scarica,
   in basso carica in verde, fondo scala 30 kW, tacca verde = limite di carica), con i kW sotto (batteria negativa = in carica).
 - **Termico**: giri, grigio spento / verde acceso / giallo trascinato senza carburante.
-- Barra in basso: «Yaris» verde con le centraline (LX, Auto, 7D2, 747, 700: verde = risponde, ✖ rossa = rifiuta o non
-  risponde), letture del freno al secondo, bollino LIVE / SIMULATA / REPLAY, 🔧 = **Debug e prove**, **▶ Avvia** / **■ Ferma**.
+- Barra in basso: 📱 — LX — 🚗 con un segmento per collegamento (verde ok, giallo in corso o parziale, rosso fallito,
+  grigio non attivo; un tocco mostra il dettaglio per centralina), bollino LIVE / SIMULATA / REPLAY, 🔧 = **Debug e
+  prove**, **▶** / **■**.
 
-Un dato mancante mostra «Non disponibile» con la causa (es. «7D2: rifiuta 221067 (7F 22 31)»). Lo schermo resta acceso.
-1. LX inserito. Apri l'app: si collega da sola all'LX già scelto (la prima volta **▶ Avvia** chiede quale).
-2. Già da fermo in READY la barra in basso dice se le letture dirette sono accettate.
+Quasi niente testo: un dato mancante mostra un **triangolo giallo** al posto del valore, e un tocco sul triangolo dice la
+causa (es. «7D2: rifiuta 221067 (7F 22 31)»). Mai zero né l'ultimo valore. Lo schermo resta acceso.
+1. LX inserito. Apri l'app: si collega da sola all'LX già scelto (la prima volta **▶** chiede quale).
+2. Già da fermo in READY i due segmenti in basso devono essere verdi; se il secondo è giallo, tocca l'icona per vedere
+   quale centralina non risponde.
 3. Guida normalmente: rilasci dell'acceleratore (atteso «Rilascio» verde) e frenate **sopra i 15 km/h**, leggere (verde)
    e decise. Annota a voce o a memoria le frenate e cosa ha mostrato l'anello.
 4. **■ Ferma** → 🔧 → **Esporta guida** → condividi il file `guida-….jsonl` con lo sviluppatore.
