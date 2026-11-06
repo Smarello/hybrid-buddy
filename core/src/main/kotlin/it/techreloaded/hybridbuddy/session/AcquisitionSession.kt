@@ -61,6 +61,7 @@ data class Timeouts(
  * for a replay, until the recording ends. Read-only: only AT/ST setup and read requests are sent (enforced by ReadOnlyCommands).
  * Signals with a target control unit are requested with physical addressing; one failing is retried less and less
  * often (1, 2, 4, 8, 16 skipped turns) so a refusing or absent unit does not slow the others down.
+ * A signal with a fallback whose read fails is replaced by its fallback signals until the next connection.
  * A schedule mixes targeted and untargeted (broadcast) signals only if every untargeted one comes before the first targeted.
  */
 class AcquisitionSession(
@@ -75,13 +76,16 @@ class AcquisitionSession(
     private val mutableState = MutableStateFlow(SessionState(source))
     val state: StateFlow<SessionState> = mutableState
 
-    val signals: List<SignalDefinition> = schedule.flatten().distinct()
+    /** Signals that carry readings: one with a fallback stores its values under the fallback ids. */
+    val signals: List<SignalDefinition> = schedule.flatten().flatMap { it.fallback.ifEmpty { listOf(it) } }.distinct()
 
     private var consecutiveTimeouts = 0
     private var selectedTarget: EcuTarget? = null
     private var flowControlSet = false
     private val consecutiveFailures = mutableMapOf<String, Int>()
     private val turnsToSkip = mutableMapOf<String, Int>()
+    /** Ids of the signals replaced by their fallback on this connection. */
+    private val replacedByFallback = mutableSetOf<String>()
 
     private class ConnectionLost(reason: String) : Exception(reason)
 
@@ -127,27 +131,36 @@ class AcquisitionSession(
         consecutiveTimeouts = 0
         selectedTarget = null
         flowControlSet = false
+        replacedByFallback.clear()
         val (identity, protocol) = initializeAdapter(timeouts) { command, timeout -> execute(connection, command, timeout) }
         mutableState.update { it.copy(adapterIdentity = identity, protocol = protocol) }
     }
 
     private suspend fun poll(connection: ElmConnection) {
         while (currentCoroutineContext().isActive) {
-            for (round in schedule) for (signal in round) {
+            for (round in schedule) for (scheduled in round) for (signal in if (scheduled.id in replacedByFallback) scheduled.fallback else listOf(scheduled)) {
                 val target = signal.target
                 if (target != null && skipTurn(signal.id)) continue
                 if (target != null && target != selectedTarget) select(connection, target)
                 val timeout = if (signal.command.startsWith("AT")) timeouts.atCommandMs else timeouts.obdRequestMs
                 val exchange = execute(connection, signal.command, timeout)
-                val reading = when (val error = exchange.error) {
+                val at = exchange.startedAtEpochMs
+                val readings = when (val error = exchange.error) {
                     null -> when (val decoded = signal.decode(exchange.lines)) {
-                        is Decoded.Value -> SignalReading(exchange.startedAtEpochMs, decoded.value, decoded.ecu, null)
-                        is Decoded.Failure -> SignalReading(exchange.startedAtEpochMs, null, null, decoded.reason)
+                        is Decoded.Value -> mapOf(signal.id to SignalReading(at, decoded.value, decoded.ecu, null))
+                        is Decoded.Values -> decoded.values.mapValues { (_, value) -> SignalReading(at, value, decoded.ecu, null) }
+                        is Decoded.Failure -> mapOf(signal.id to SignalReading(at, null, null, decoded.reason))
                     }
-                    else -> SignalReading(exchange.startedAtEpochMs, null, null, if (target != null) "non risponde ($error)" else error)
+                    else -> mapOf(signal.id to SignalReading(at, null, null, if (target != null) "non risponde ($error)" else error))
                 }
-                if (target != null) recordOutcome(signal.id, reading.failure == null)
-                mutableState.update { it.copy(readings = it.readings + (signal.id to reading)) }
+                val failed = readings.values.any { it.failure != null }
+                if (failed && signal.fallback.isNotEmpty()) {
+                    // The exchange stays in the recording; the fallback signals are read from the next turn on.
+                    replacedByFallback += signal.id
+                    continue
+                }
+                if (target != null) recordOutcome(signal.id, !failed)
+                mutableState.update { it.copy(readings = it.readings + readings) }
             }
         }
     }

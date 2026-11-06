@@ -1,8 +1,22 @@
 # STATUS.md
 
-**Aggiornato:** 2026-11-06 · versione app 0.4.0
+**Aggiornato:** 2026-11-06 · versione app 0.4.1
 
 ## Ultimo risultato verificato
+- **0.4.1 — triangoli solo per errori, frenata classificata come Hybrid Assistant** (D-028, D-029), dopo la guida del
+  proprietario con la 0.4.0 (troppi triangoli da fermo; sfiorando il freno l'anello andava in rosso).
+  - **Triangolo giallo solo** se la lettura è fallita (rifiuto, risposta non valida, timeout, disconnessione). Dato in
+    attesa o in ritardo: trattino grigio, causa al tocco. Scadenza dei dati da 2 a 3 s.
+  - **M e R troncati all'intero come HA**: sulla prima guida reale le frenate solo rigenerative passano da 22 a 31; prima
+    9 letture a frazioni di Nm l'una dall'altra davano «attrito 0 %» in rosso.
+  - **M e R in una sola lettura** `2210671069`, come il campione unico di HA; se 7D2 la rifiuta, si torna da soli alle
+    due letture separate.
+  - Disegno dell'anello e «Rilascio» invariati.
+  - Verificato automaticamente: 57 test JVM, tra cui troncamento, errore o attesa, richiesta doppia con ripiego (auto
+    simulata che la rifiuta) e replay della guida 0.3.0 con il nuovo calendario. Build e lint con i controlli
+    dell'ambiente.
+  - **Non verificato sull'auto**: se 7D2 accetta la richiesta a due DID, se da fermo i triangoli spariscono, se le frenate
+    leggere restano verdi.
 - **0.4.0 — schermata principale = cruscotto di Hybrid Assistant** (D-027): stessa griglia della figura 8.1 del manuale
   utente (`docs/HA-User-Guide - v1.1r - 20170204.pdf`, §8.1), in landscape. Attivi: velocità, freno (anello della 0.3.x),
   EV, powermeter a barre (termico, batteria con tacca del limite di carica), termico (giri e stato: spento / acceso /
@@ -34,6 +48,11 @@
   termico spento), «Rilascio» al rilascio dell'acceleratore, anello rosso con la velocità, riga delle centraline stabile.
 
 ## Problema aperto
+**Rilascio grigio (0.4.0)**: nella prima guida, con pedali rilasciati e batteria in carica, la coppia termica `2210C2` era
+positiva in 186 campioni su 253 (termico acceso, forse in riscaldamento). Per HA, come per l'app, quello non è
+«rilascio» e l'anello resta grigio. Coerente con HA, ma non dimostrato: serve la registrazione della 0.4.x (`221060` mai
+verificato). Nelle frenate gli «attriti» grandi al rilascio del pedale potrebbero sparire con la lettura unica: da vedere.
+
 Il rilascio dipende da `221060` (significato dedotto dall'uso in Hybrid Assistant, mai letto sulla Yaris) e dal termico
 spento (giri < 800 o coppia `10C2` < 0): un termico in riscaldamento che carica la batteria in rilascio non conta come
 rigenerazione, come in Hybrid Assistant. Nelle frenate col pedale la registrazione mostra spesso M = R (solo rigenerativa,
@@ -41,5 +60,9 @@ anche con barra CHG piena) e quote d'attrito piccole (M − R di pochi Nm): con 
 rosso in quei momenti; da confrontare col cruscotto.
 
 ## Prossimo passo
+**Guida con la 0.4.1**: da fermo niente triangoli gialli con l'auto collegata; frenate leggere sopra i 15 km/h (attese
+verdi); rilasci dell'acceleratore; esportare `guida-….jsonl`. Nella registrazione: risposta a `2210671069`.
+
+Precedente (0.4.0):
 **Seconda guida con la 0.4.0** (`README.md`, sezione "Cruscotto"): da fermo la barra in basso deve dare Auto verde; poi
 rilasci dell'acceleratore (atteso «Rilascio» verde) e frenate leggere e decise sopra i 15 km/h; esportare `guida-….jsonl`.

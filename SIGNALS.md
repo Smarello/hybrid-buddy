@@ -83,6 +83,7 @@ dopo `62 DID DID`. Centralina **7D2 → 7DA** (ibrida, mai interrogata finora: l
 |---|---|---|---|---|---|---|---|---|
 | Coppia richiesta dal freno (`brake_mastcyl_trq`) | 7D2 | `221067` | b1-b2 | (raw−32768)/8 | Nm (≤ 0 in frenata) | HA `scanner._v243_3` | guida 2026-11-05 (0.3.0): 622 risposte `7DA 05 62 10 67 ..`; 0 senza pedale (anche in rilascio con batteria in carica), −5…−192 Nm frenando in marcia, −500…−1024 da fermo col pedale premuto | risposta ricevuta |
 | Coppia rigenerativa (`brake_regen_trq`) | 7D2 | `221069` | b3-b4 | (raw−32768)/8 | Nm (≤ 0 in frenata) | HA `scanner._v243_3` | guida 2026-11-05: 622 risposte; 0 senza pedale, −3…−195 Nm col pedale, spesso uguale a M (frenata solo rigenerativa), 0 da fermo | risposta ricevuta |
+| Coppie del freno M e R insieme (D-028) | 7D2 | `2210671069` | `62 10 67 m1 m2 10 69 r1 r2 r3 r4`: M = m1-m2, R = r3-r4 | come sopra | Nm | ISO 14229 (ReadDataByIdentifier con più DID); HA le legge insieme via DDDI F301 | nessuna; se rifiutata, l'app torna a `221067` + `221069` | candidato |
 | Pedale acceleratore (dall'uso) | 7D2 | `221060` | b1 | raw/2 | % | HA (`_v4_5`, "premuto" se > 0) | letto dalla Guida 0.3.2 per lo stato «Rilascio» (D-026); mai provato | candidato |
 | Giri / coppia MG1 | 7D2 | `2210A0` | b1-b2 / b7-b8 | raw−32768 / (raw−32768)/8 | rpm / Nm | HA (anche lettura diretta nel sequencer `china`) | nessuna | candidato |
 | Giri / coppia MG2 | 7D2 | `2210A1` | b1-b2 / b7-b8 | raw−32768 / (raw−32768)/8 | rpm / Nm | HA (idem) | nessuna | candidato |
@@ -104,7 +105,7 @@ Frequenze misurate: freno 2,7 letture/s (giro 0,33 s mediano, 0,6 s p90; lettura
 comandi AT da ~25 ms). Limite emerso: `221067`/`221069` valgono 0 anche quando, al rilascio dell'acceleratore, la batteria
 si carica a −2…−8 kW con il termico a coppia 0: la rigenerazione **senza pedale** non è visibile da questi DID.
 
-Formula di Hybrid Assistant (ramo Yaris): frenata se `M < 0 o R < 0`; attrito se `M − R < 0`; quota d'attrito
+Formula di Hybrid Assistant (ramo Yaris), con M e R troncati all'intero come in HA (D-029): frenata se `M < 0 o R < 0`; attrito se `M − R < 0`; quota d'attrito
 `(M − R)·100/M`; campioni validi sopra 15 km/h (`010D`). Senza pedale (stato «Rilascio», D-026): velocità ≥ 2 km/h,
 `221060` = 0, termico spento (giri < 800) o trascinato (coppia `2210C2` < 0), potenza batteria < 0 → anello verde con
 intensità min(1, |P/limite|), come fa la HyBall con la potenza HV negli stati EV / termico trascinato. Le richieste sono già ammesse da `ReadOnlyCommands`
